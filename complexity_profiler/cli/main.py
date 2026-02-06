@@ -250,7 +250,7 @@ def compare(
         table = Table(title="Algorithm Comparison")
         table.add_column("Algorithm", style="cyan", no_wrap=True)
         table.add_column("Complexity", style="magenta")
-        table.add_column("Fit Quality (R²)", style="green")
+        table.add_column("Fit Quality (R^2)", style="green")
         table.add_column("Stable", style="yellow")
 
         for result in results:

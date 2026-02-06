@@ -13,8 +13,8 @@ class ComplexityClass(Enum):
     LOGARITHMIC = "O(log n)"
     LINEAR = "O(n)"
     LINEARITHMIC = "O(n log n)"
-    QUADRATIC = "O(n�)"
-    CUBIC = "O(n�)"
+    QUADRATIC = "O(n^2)"
+    CUBIC = "O(n^2)"
     EXPONENTIAL = "O(2)"
     FACTORIAL = "O(n!)"
 

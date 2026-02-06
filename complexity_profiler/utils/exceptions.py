@@ -194,7 +194,7 @@ class CurveFittingError(BigOComplexityError):
         Args:
             message: Description of the fitting failure
             complexity_class: The complexity class that failed to fit
-            details: Additional context (e.g., R² value, convergence info)
+            details: Additional context (e.g., R^2 value, convergence info)
         """
         details = details or {}
         if complexity_class:

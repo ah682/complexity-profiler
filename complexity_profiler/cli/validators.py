@@ -18,9 +18,6 @@ AVAILABLE_ALGORITHMS = {
     "bubble_sort": ("complexity_profiler.algorithms.sorting", "BubbleSort"),
     "insertion_sort": ("complexity_profiler.algorithms.sorting", "InsertionSort"),
     "heap_sort": ("complexity_profiler.algorithms.sorting", "HeapSort"),
-    # Searching algorithms (if implemented)
-    # "binary_search": ("complexity_profiler.algorithms.searching", "BinarySearch"),
-    # "linear_search": ("complexity_profiler.algorithms.searching", "LinearSearch"),
 }
 
 # Valid metrics for visualization

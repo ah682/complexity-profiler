@@ -37,8 +37,8 @@ class ComplexityFitter:
         >>> sizes = np.array([10, 20, 30, 40, 50])
         >>> times = np.array([0.001, 0.004, 0.009, 0.016, 0.025])
         >>> complexity, r_squared = fitter.fit_complexity(sizes, times)
-        >>> print(f"Best fit: {complexity} with R�={r_squared:.4f}")
-        Best fit: O(n�) with R�=1.0000
+        >>> print(f"Best fit: {complexity} with R^2={r_squared:.4f}")
+        Best fit: O(n^2) with R^2=1.0000
     """
 
     # Dictionary mapping complexity classes to their mathematical functions
@@ -56,7 +56,7 @@ class ComplexityFitter:
         Initialize the complexity fitter.
 
         Args:
-            min_r_squared: Minimum R� value to consider a fit acceptable (default: 0.8)
+            min_r_squared: Minimum R^2 value to consider a fit acceptable (default: 0.8)
         """
         self.min_r_squared = min_r_squared
 
@@ -69,8 +69,8 @@ class ComplexityFitter:
         Fit performance data to complexity curves and return the best fit.
 
         Attempts to fit the data to each complexity function and selects
-        the one with the highest R� value. Prefers simpler complexities
-        when R� values are very close.
+        the one with the highest R^2 value. Prefers simpler complexities
+        when R^2 values are very close.
 
         Args:
             sizes: Array of input sizes (n values)
@@ -120,7 +120,7 @@ class ComplexityFitter:
         # Find the best fit
         best_complexity = max(fits.items(), key=lambda x: x[1])
 
-        # Apply Occam's Razor: prefer simpler complexity if R� is very close
+        # Apply Occam's Razor: prefer simpler complexity if R^2 is very close
         best_class, best_r_sq = best_complexity
         best_class = self._apply_simplicity_bias(fits, best_class, best_r_sq)
 
@@ -133,7 +133,7 @@ class ComplexityFitter:
         func: ComplexityFunction,
     ) -> float:
         """
-        Fit data to a single complexity function and return R� score.
+        Fit data to a single complexity function and return R^2 score.
 
         Args:
             sizes: Array of input sizes
@@ -145,7 +145,7 @@ class ComplexityFitter:
 
         Raises:
             RuntimeError: If curve fitting fails
-            ValueError: If R� calculation fails
+            ValueError: If R^2 calculation fails
         """
         # Initial parameter guesses
         p0 = [1.0, 0.0]
@@ -174,9 +174,9 @@ class ComplexityFitter:
         predicted: npt.NDArray[np.float64],
     ) -> float:
         """
-        Calculate the coefficient of determination (R�).
+        Calculate the coefficient of determination (R^2).
 
-        R� measures how well the predicted values match the actual values.
+        R^2 measures how well the predicted values match the actual values.
         Values range from - to 1, where 1 indicates perfect fit.
 
         Args:
@@ -196,7 +196,7 @@ class ComplexityFitter:
         if ss_tot < 1e-10:
             return 1.0 if ss_res < 1e-10 else 0.0
 
-        # Calculate R�
+        # Calculate R^2
         r_squared = 1 - (ss_res / ss_tot)
 
         return float(r_squared)
@@ -208,15 +208,15 @@ class ComplexityFitter:
         best_r_sq: float,
     ) -> ComplexityClass:
         """
-        Apply Occam's Razor: prefer simpler complexity when R� values are close.
+        Apply Occam's Razor: prefer simpler complexity when R^2 values are close.
 
-        If multiple complexities have similar R� values (within 0.02), prefer
+        If multiple complexities have similar R^2 values (within 0.02), prefer
         the simpler one based on a predefined complexity order.
 
         Args:
-            fits: Dictionary of complexity classes to R� scores
+            fits: Dictionary of complexity classes to R^2 scores
             best_class: Currently best complexity class
-            best_r_sq: R� score of best class
+            best_r_sq: R^2 score of best class
 
         Returns:
             Potentially updated complexity class favoring simplicity
@@ -233,9 +233,9 @@ class ComplexityFitter:
             ComplexityClass.FACTORIAL,
         ]
 
-        threshold = 0.02  # R� difference threshold for considering fits "equal"
+        threshold = 0.02  # R^2 difference threshold for considering fits "equal"
 
-        # Find all complexities within threshold of best R�
+        # Find all complexities within threshold of best R^2
         similar_fits = [
             cls for cls, r_sq in fits.items()
             if abs(r_sq - best_r_sq) <= threshold
@@ -280,7 +280,7 @@ def fit_to_complexity(
     Args:
         sizes: List of input sizes
         times: List of execution times
-        min_r_squared: Minimum acceptable R� value
+        min_r_squared: Minimum acceptable R^2 value
 
     Returns:
         Tuple of (best_complexity_class, r_squared_score)
@@ -289,8 +289,8 @@ def fit_to_complexity(
         >>> sizes = [10, 20, 30, 40, 50]
         >>> times = [0.01, 0.02, 0.03, 0.04, 0.05]
         >>> complexity, r_sq = fit_to_complexity(sizes, times)
-        >>> print(f"{complexity}: R�={r_sq:.3f}")
-        O(n): R�=1.000
+        >>> print(f"{complexity}: R^2={r_sq:.3f}")
+        O(n): R^2=1.000
     """
     fitter = ComplexityFitter(min_r_squared=min_r_squared)
     sizes_arr = np.array(sizes, dtype=np.float64)
