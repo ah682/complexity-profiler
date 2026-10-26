@@ -2,21 +2,21 @@
 Quick test script to verify Phase 4 implementations.
 """
 
+from complexity_profiler.algorithms.graph import BFS, DFS, DijkstraShortestPath, Graph
 from complexity_profiler.algorithms.searching import (
-    LinearSearch,
     BinarySearch,
-    JumpSearch,
     InterpolationSearch,
-)
-from complexity_profiler.algorithms.graph import Graph, BFS, DFS, DijkstraShortestPath
-from complexity_profiler.data.graph_generators import (
-    random_graph,
-    complete_graph,
-    tree_graph,
-    linear_graph,
-    cyclic_graph,
+    JumpSearch,
+    LinearSearch,
 )
 from complexity_profiler.analysis.metrics import DefaultMetricsCollector
+from complexity_profiler.data.graph_generators import (
+    complete_graph,
+    cyclic_graph,
+    linear_graph,
+    random_graph,
+    tree_graph,
+)
 
 
 def test_searching_algorithms():

@@ -6,16 +6,16 @@ metrics, and algorithm comparisons using the Rich library for enhanced terminal
 displays.
 """
 
-from typing import List, Dict, Any
-from rich.console import Console
-from rich.table import Table
-from rich.panel import Panel
-from rich.text import Text
-from rich.tree import Tree
-from rich import box
+from typing import Any, List, Optional
 
-from complexity_profiler.analysis.profiler import ProfileResult
+from rich import box
+from rich.console import Console, Group
+from rich.panel import Panel
+from rich.table import Table
+from rich.tree import Tree
+
 from complexity_profiler.analysis.metrics import PerformanceMetrics
+from complexity_profiler.analysis.profiler import ProfileResult
 from complexity_profiler.analysis.statistics import Statistics
 from complexity_profiler.visualization.themes import CONSOLE_THEME
 
@@ -34,7 +34,7 @@ class ResultFormatter:
         >>> console.print(table)
     """
 
-    def __init__(self, console: Console = None) -> None:
+    def __init__(self, console: Optional[Console] = None) -> None:
         """
         Initialize the formatter.
 
@@ -114,12 +114,20 @@ class ResultFormatter:
         summary_lines = [
             f"[bold]Algorithm:[/] [{CONSOLE_THEME['algorithm_name']}]{result.algorithm_name}[/]",
             f"[bold]Category:[/] [{CONSOLE_THEME['info']}]{result.category}[/]",
-            f"[bold]Detected Complexity:[/] [{CONSOLE_THEME['complexity_class']}]{result.empirical_complexity}[/]",
+            f"[bold]Empirical fit:[/] [{CONSOLE_THEME['complexity_class']}]"
+            f"{result.empirical_complexity}[/]",
             f"[bold]R² Score:[/] [{CONSOLE_THEME['metric_value']}]{result.r_squared:.4f}[/]",
             f"[bold]Input Sizes:[/] {self._format_list(result.input_sizes)}",
             f"[bold]Timestamp:[/] {result.timestamp.strftime('%Y-%m-%d %H:%M:%S')}",
         ]
 
+        if result.notes:
+            summary_lines.append(f"[bold]Notes:[/] {result.notes}")
+        if result.candidate_scores:
+            scores = ", ".join(
+                f"{name}: {score:.4f}" for name, score in result.candidate_scores.items()
+            )
+            summary_lines.append(f"[bold]Candidate R²:[/] {scores}")
         content = "\n".join(summary_lines)
 
         return Panel(
@@ -164,8 +172,7 @@ class ResultFormatter:
         for result in results:
             # Calculate average execution time across all sizes
             avg_time = sum(
-                result.statistics_per_size[size].mean
-                for size in result.input_sizes
+                result.statistics_per_size[size].mean for size in result.input_sizes
             ) / len(result.input_sizes)
 
             table.add_row(
@@ -231,7 +238,8 @@ class ResultFormatter:
             f"[bold]Max:[/] [{CONSOLE_THEME['metric_value']}]{stats.max:.6f}[/]",
             f"[bold]25th %ile:[/] [{CONSOLE_THEME['metric_value']}]{stats.percentile_25:.6f}[/]",
             f"[bold]75th %ile:[/] [{CONSOLE_THEME['metric_value']}]{stats.percentile_75:.6f}[/]",
-            f"[bold]CV:[/] [{CONSOLE_THEME['metric_value']}]{stats.coefficient_of_variation:.4f}[/]",
+            f"[bold]CV:[/] [{CONSOLE_THEME['metric_value']}]"
+            f"{stats.coefficient_of_variation:.4f}[/]",
         ]
 
         consistency = "[green]Consistent[/]" if stats.is_consistent() else "[yellow]Variable[/]"
@@ -277,9 +285,7 @@ class ResultFormatter:
             sizes_branch = algo_branch.add("Input Sizes")
             for size in result.input_sizes:
                 stats = result.statistics_per_size[size]
-                sizes_branch.add(
-                    f"n={size:,}: {stats.mean:.6f}s ± {stats.std_dev:.6f}s"
-                )
+                sizes_branch.add(f"n={size:,}: {stats.mean:.6f}s ± {stats.std_dev:.6f}s")
 
         return tree
 
@@ -374,7 +380,7 @@ def format_metrics(metrics: PerformanceMetrics) -> str:
     return formatter.format_metrics(metrics)
 
 
-def format_profile_result(result: ProfileResult) -> Panel:
+def format_profile_result(result: ProfileResult) -> Group:
     """
     Format a complete ProfileResult with summary and table.
 
@@ -396,6 +402,7 @@ def format_profile_result(result: ProfileResult) -> Panel:
 
     # Combine into output
     from rich.console import Group
+
     group = Group(summary, "", table)
 
     return group

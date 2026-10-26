@@ -1,16 +1,18 @@
+# B311 annotations below are for synthetic inputs or algorithm pivots,
+# where reproducible pseudorandomness is intentional; no security use.
 """Sorting algorithm implementations."""
 
-from typing import TypeVar, Generic
 import random
+from typing import Generic, TypeVar
+
 from complexity_profiler.algorithms.base import (
     AlgorithmMetadata,
+    Comparable,
     ComplexityClass,
     MetricsCollector,
-    Comparable,
 )
 
-
-T = TypeVar('T', bound=Comparable)
+T = TypeVar("T", bound=Comparable)
 
 
 class MergeSort(Generic[T]):
@@ -25,7 +27,9 @@ class MergeSort(Generic[T]):
             space_complexity="O(n)",
             stable=True,
             in_place=False,
-            description="Stable divide-and-conquer algorithm with O(n log n) guaranteed performance.",
+            description=(
+                "Stable divide-and-conquer algorithm " "with O(n log n) guaranteed performance."
+            ),
         )
 
     def execute(self, data: list[T], collector: MetricsCollector) -> list[T]:
@@ -90,7 +94,9 @@ class QuickSort(Generic[T]):
             space_complexity="O(log n) to O(n)",
             stable=False,
             in_place=False,
-            description="Fast partitioning with random pivot selection for O(n log n) average case.",
+            description=(
+                "Fast partitioning with random pivot selection " "for O(n log n) average case."
+            ),
         )
 
     def execute(self, data: list[T], collector: MetricsCollector) -> list[T]:
@@ -102,7 +108,7 @@ class QuickSort(Generic[T]):
 
         collector.record_recursive_call()
 
-        pivot = random.choice(arr)
+        pivot = random.choice(arr)  # nosec B311
         collector.record_access()
 
         lesser: list[T] = []
@@ -181,7 +187,9 @@ class BubbleSort(Generic[T]):
             space_complexity="O(1)",
             stable=True,
             in_place=True,
-            description="Stable in-place algorithm with early termination optimization.",
+            description=(
+                "Bubble sort: stable in-place algorithm " "with early termination optimization."
+            ),
         )
 
     def execute(self, data: list[T], collector: MetricsCollector) -> list[T]:
@@ -264,7 +272,9 @@ class HeapSort(Generic[T]):
             space_complexity="O(1)",
             stable=False,
             in_place=True,
-            description="In-place algorithm using binary heap for guaranteed O(n log n) performance.",
+            description=(
+                "In-place algorithm using binary heap " "for guaranteed O(n log n) performance."
+            ),
         )
 
     def execute(self, data: list[T], collector: MetricsCollector) -> list[T]:

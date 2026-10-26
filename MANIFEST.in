@@ -1,0 +1,18 @@
+# Source releases carry the same verification inputs as the checkout.
+include README.md LICENSE CHANGELOG.md
+include pytest.ini mypy.ini .flake8 .editorconfig .pre-commit-config.yaml
+include requirements.txt requirements-dev.txt uv.lock config.toml
+include complexity-profiler.py
+recursive-include tests *.py *.md
+recursive-include docs *.md *.png
+recursive-include examples *.py
+recursive-include .github/workflows *.yml *.yaml
+# Generated files, caches and build outputs are not release sources.
+global-exclude *.py[cod] .DS_Store
+prune .git
+prune .venv
+prune .pytest_cache
+prune .mypy_cache
+prune htmlcov
+prune build
+prune dist

@@ -22,3 +22,5 @@ ipython>=8.14.0
 # Type stubs
 types-setuptools
 pandas-stubs
+
+build>=1.0.0

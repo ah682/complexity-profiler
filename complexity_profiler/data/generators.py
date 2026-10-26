@@ -1,3 +1,5 @@
+# B311 annotations below are for synthetic inputs or algorithm pivots,
+# where reproducible pseudorandomness is intentional; no security use.
 """
 Data generators for algorithm testing and profiling.
 
@@ -6,8 +8,8 @@ under different conditions (random, sorted, reverse-sorted, nearly-sorted, etc.)
 These generators are essential for comprehensive algorithm analysis.
 """
 
-from typing import Callable, Optional
 import random
+from typing import Callable, Optional
 
 
 def random_data(size: int, seed: Optional[int] = None) -> list[int]:
@@ -41,7 +43,7 @@ def random_data(size: int, seed: Optional[int] = None) -> list[int]:
     if seed is not None:
         random.seed(seed)
 
-    return [random.randint(0, size * 10) for _ in range(size)]
+    return [random.randint(0, size * 10) for _ in range(size)]  # nosec B311
 
 
 def sorted_data(size: int) -> list[int]:
@@ -135,18 +137,14 @@ def nearly_sorted_data(size: int, swaps: int = 10, seed: Optional[int] = None) -
     # Perform random swaps
     num_swaps = min(swaps, size // 2)  # Cap swaps at half the size
     for _ in range(num_swaps):
-        i = random.randint(0, size - 1)
-        j = random.randint(0, size - 1)
+        i = random.randint(0, size - 1)  # nosec B311
+        j = random.randint(0, size - 1)  # nosec B311
         data[i], data[j] = data[j], data[i]
 
     return data
 
 
-def duplicates_data(
-    size: int,
-    num_unique: int = 10,
-    seed: Optional[int] = None
-) -> list[int]:
+def duplicates_data(size: int, num_unique: int = 10, seed: Optional[int] = None) -> list[int]:
     """
     Generate a list with many duplicate values.
 
@@ -181,7 +179,7 @@ def duplicates_data(
         random.seed(seed)
 
     unique_values = list(range(num_unique))
-    return [random.choice(unique_values) for _ in range(size)]
+    return [random.choice(unique_values) for _ in range(size)]  # nosec B311
 
 
 def uniform_data(size: int, value: int = 42) -> list[int]:
@@ -266,52 +264,50 @@ def get_data_generator(name: str) -> Callable[[int], list[int]]:
         10
     """
     generators = {
-        'random': random_data,
-        'sorted': sorted_data,
-        'reverse': reverse_sorted_data,
-        'reverse_sorted': reverse_sorted_data,
-        'nearly_sorted': nearly_sorted_data,
-        'duplicates': duplicates_data,
-        'uniform': uniform_data,
-        'sawtooth': sawtooth_data,
+        "random": random_data,
+        "sorted": sorted_data,
+        "reverse": reverse_sorted_data,
+        "reverse_sorted": reverse_sorted_data,
+        "nearly_sorted": nearly_sorted_data,
+        "duplicates": duplicates_data,
+        "uniform": uniform_data,
+        "sawtooth": sawtooth_data,
     }
 
     if name not in generators:
-        available = ', '.join(sorted(generators.keys()))
-        raise ValueError(
-            f"Unknown generator '{name}'. Available generators: {available}"
-        )
+        available = ", ".join(sorted(generators.keys()))
+        raise ValueError(f"Unknown generator '{name}'. Available generators: {available}")
 
     return generators[name]
 
 
 # Predefined generator configurations for common use cases
 BEST_CASE_GENERATORS = {
-    'sorted': sorted_data,
-    'nearly_sorted': lambda n: nearly_sorted_data(n, swaps=n // 100),
+    "sorted": sorted_data,
+    "nearly_sorted": lambda n: nearly_sorted_data(n, swaps=n // 100),
 }
 
 WORST_CASE_GENERATORS = {
-    'reverse': reverse_sorted_data,
-    'random': random_data,
+    "reverse": reverse_sorted_data,
+    "random": random_data,
 }
 
 AVERAGE_CASE_GENERATORS = {
-    'random': random_data,
-    'nearly_sorted': lambda n: nearly_sorted_data(n, swaps=n // 10),
+    "random": random_data,
+    "nearly_sorted": lambda n: nearly_sorted_data(n, swaps=n // 10),
 }
 
 
 __all__ = [
-    'random_data',
-    'sorted_data',
-    'reverse_sorted_data',
-    'nearly_sorted_data',
-    'duplicates_data',
-    'uniform_data',
-    'sawtooth_data',
-    'get_data_generator',
-    'BEST_CASE_GENERATORS',
-    'WORST_CASE_GENERATORS',
-    'AVERAGE_CASE_GENERATORS',
+    "random_data",
+    "sorted_data",
+    "reverse_sorted_data",
+    "nearly_sorted_data",
+    "duplicates_data",
+    "uniform_data",
+    "sawtooth_data",
+    "get_data_generator",
+    "BEST_CASE_GENERATORS",
+    "WORST_CASE_GENERATORS",
+    "AVERAGE_CASE_GENERATORS",
 ]

@@ -12,7 +12,7 @@ Thanks for considering contributing. Here's what you need to know.
 
 Fork and clone:
 ```bash
-git clone https://github.com/yourusername/complexity-profiler.git
+git clone https://github.com/ah682/complexity-profiler.git
 cd complexity-profiler
 ```
 

@@ -3,29 +3,29 @@
 from complexity_profiler.algorithms.base import (
     Algorithm,
     AlgorithmMetadata,
-    ComplexityClass,
     Comparable,
+    ComplexityClass,
     MetricsCollector,
 )
-from complexity_profiler.algorithms.sorting import (
-    MergeSort,
-    QuickSort,
-    SelectionSort,
-    BubbleSort,
-    InsertionSort,
-    HeapSort,
-)
-from complexity_profiler.algorithms.searching import (
-    LinearSearch,
-    BinarySearch,
-    JumpSearch,
-    InterpolationSearch,
-)
 from complexity_profiler.algorithms.graph import (
-    Graph,
     BFS,
     DFS,
     DijkstraShortestPath,
+    Graph,
+)
+from complexity_profiler.algorithms.searching import (
+    BinarySearch,
+    InterpolationSearch,
+    JumpSearch,
+    LinearSearch,
+)
+from complexity_profiler.algorithms.sorting import (
+    BubbleSort,
+    HeapSort,
+    InsertionSort,
+    MergeSort,
+    QuickSort,
+    SelectionSort,
 )
 
 __all__ = [

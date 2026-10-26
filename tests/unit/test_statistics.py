@@ -5,9 +5,10 @@ This module tests the Statistics dataclass and compute_statistics function
 to ensure accurate statistical calculations for performance analysis.
 """
 
-import pytest
-import numpy as np
 from typing import List
+
+import numpy as np
+import pytest
 
 from complexity_profiler.analysis.statistics import Statistics, compute_statistics
 
@@ -222,7 +223,7 @@ class TestComputeStatistics:
         # Mean is 0, so CV should be inf if std_dev > 0, or 0 if std_dev == 0
         assert stats.mean == 0.0
         if stats.std_dev > 0:
-            assert stats.coefficient_of_variation == float('inf')
+            assert stats.coefficient_of_variation == float("inf")
         else:
             assert stats.coefficient_of_variation == 0.0
 
@@ -283,9 +284,7 @@ class TestComputeStatistics:
             ([0.0, 100.0], 50.0),
         ],
     )
-    def test_compute_mean_parametrized(
-        self, values: List[float], expected_mean: float
-    ) -> None:
+    def test_compute_mean_parametrized(self, values: List[float], expected_mean: float) -> None:
         """Test mean computation with various datasets."""
         stats = compute_statistics(values)
 
@@ -395,9 +394,7 @@ class TestStatisticsIntegration:
         assert stats.is_consistent(threshold=0.01)  # Very low threshold
         assert stats.std_dev == 0.0  # Should be exactly 0
 
-    def test_statistics_with_performance_data(
-        self, performance_data_generator: any
-    ) -> None:
+    def test_statistics_with_performance_data(self, performance_data_generator: any) -> None:
         """Test statistics computation with synthetic performance data."""
         sizes, times = performance_data_generator("linear", 20)
 

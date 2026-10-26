@@ -9,14 +9,15 @@ a simple setup_logging() function for initialization.
 
 import logging
 import sys
+from logging.handlers import RotatingFileHandler
 from pathlib import Path
 from typing import Optional
-from logging.handlers import RotatingFileHandler
 
 try:
     from rich.console import Console
     from rich.logging import RichHandler
     from rich.traceback import install as install_rich_traceback
+
     RICH_AVAILABLE = True
 except ImportError:
     RICH_AVAILABLE = False
@@ -90,9 +91,7 @@ def setup_logging(
     """
     # Validate and convert log level
     numeric_level = _get_numeric_level(level)
-    file_numeric_level = (
-        _get_numeric_level(log_file_level) if log_file_level else numeric_level
-    )
+    file_numeric_level = _get_numeric_level(log_file_level) if log_file_level else numeric_level
 
     # Get root logger and clear any existing handlers
     root_logger = logging.getLogger()
@@ -155,9 +154,7 @@ def _get_numeric_level(level: str) -> int:
     numeric_level = getattr(logging, level.upper(), None)
     if not isinstance(numeric_level, int):
         valid_levels = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
-        raise ValueError(
-            f"Invalid log level: {level}. Must be one of {valid_levels}"
-        )
+        raise ValueError(f"Invalid log level: {level}. Must be one of {valid_levels}")
     return numeric_level
 
 
@@ -181,6 +178,7 @@ def _create_console_handler(
     Returns:
         Configured console handler
     """
+    handler: logging.Handler
     if enable_rich:
         # Create rich console with error output to stderr
         console = Console(file=sys.stderr, force_terminal=True)

@@ -1,14 +1,13 @@
 """Quick test to verify sorting algorithms work correctly."""
 
 from complexity_profiler.algorithms.sorting import (
+    BubbleSort,
+    HeapSort,
+    InsertionSort,
     MergeSort,
     QuickSort,
     SelectionSort,
-    BubbleSort,
-    InsertionSort,
-    HeapSort,
 )
-from complexity_profiler.algorithms.base import MetricsCollector
 
 
 class SimpleCollector:
@@ -47,7 +46,7 @@ class SimpleCollector:
         self.recursive_calls = 0
 
 
-def test_algorithm(algorithm_class, name: str, test_data: list):
+def check_algorithm(algorithm_class, name: str, test_data: list):
     """Test a sorting algorithm."""
     collector = SimpleCollector()
     algorithm = algorithm_class()
@@ -89,7 +88,7 @@ if __name__ == "__main__":
 
     all_correct = True
     for algo_class, name in algorithms:
-        if not test_algorithm(algo_class, name, test_data):
+        if not check_algorithm(algo_class, name, test_data):
             all_correct = False
 
     print("\n" + "=" * 60)

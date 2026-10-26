@@ -9,29 +9,28 @@ This module provides comprehensive tests for all sorting algorithms including:
 - Performance characteristics
 """
 
-import pytest
-import random
-from typing import Any, Type, Callable
+from typing import Any, Type
 
+import pytest
+
+from complexity_profiler.algorithms.base import Algorithm, ComplexityClass
 from complexity_profiler.algorithms.sorting import (
+    BubbleSort,
+    HeapSort,
+    InsertionSort,
     MergeSort,
     QuickSort,
     SelectionSort,
-    BubbleSort,
-    InsertionSort,
-    HeapSort,
 )
-from complexity_profiler.algorithms.base import Algorithm, ComplexityClass
 from complexity_profiler.analysis.metrics import DefaultMetricsCollector
 from complexity_profiler.data.generators import (
-    random_data,
-    sorted_data,
-    reverse_sorted_data,
-    nearly_sorted_data,
     duplicates_data,
+    nearly_sorted_data,
+    random_data,
+    reverse_sorted_data,
+    sorted_data,
     uniform_data,
 )
-
 
 # Parametrize all sorting algorithms for common tests
 ALL_SORTING_ALGORITHMS = [
@@ -48,9 +47,7 @@ class TestSortingCorrectness:
     """Test suite for verifying sorting correctness across all algorithms."""
 
     @pytest.mark.parametrize("algorithm_class,name", ALL_SORTING_ALGORITHMS)
-    def test_sorts_random_data(
-        self, algorithm_class: Type[Algorithm], name: str
-    ) -> None:
+    def test_sorts_random_data(self, algorithm_class: Type[Algorithm], name: str) -> None:
         """Test that algorithm correctly sorts random data."""
         algorithm = algorithm_class()
         collector = DefaultMetricsCollector()
@@ -63,9 +60,7 @@ class TestSortingCorrectness:
         assert all(result[i] <= result[i + 1] for i in range(len(result) - 1))
 
     @pytest.mark.parametrize("algorithm_class,name", ALL_SORTING_ALGORITHMS)
-    def test_sorts_already_sorted_data(
-        self, algorithm_class: Type[Algorithm], name: str
-    ) -> None:
+    def test_sorts_already_sorted_data(self, algorithm_class: Type[Algorithm], name: str) -> None:
         """Test sorting already sorted data (best case for some algorithms)."""
         algorithm = algorithm_class()
         collector = DefaultMetricsCollector()
@@ -77,9 +72,7 @@ class TestSortingCorrectness:
         assert all(result[i] <= result[i + 1] for i in range(len(result) - 1))
 
     @pytest.mark.parametrize("algorithm_class,name", ALL_SORTING_ALGORITHMS)
-    def test_sorts_reverse_sorted_data(
-        self, algorithm_class: Type[Algorithm], name: str
-    ) -> None:
+    def test_sorts_reverse_sorted_data(self, algorithm_class: Type[Algorithm], name: str) -> None:
         """Test sorting reverse sorted data (worst case for many algorithms)."""
         algorithm = algorithm_class()
         collector = DefaultMetricsCollector()
@@ -92,9 +85,7 @@ class TestSortingCorrectness:
         assert all(result[i] <= result[i + 1] for i in range(len(result) - 1))
 
     @pytest.mark.parametrize("algorithm_class,name", ALL_SORTING_ALGORITHMS)
-    def test_sorts_data_with_duplicates(
-        self, algorithm_class: Type[Algorithm], name: str
-    ) -> None:
+    def test_sorts_data_with_duplicates(self, algorithm_class: Type[Algorithm], name: str) -> None:
         """Test sorting data containing many duplicate values."""
         algorithm = algorithm_class()
         collector = DefaultMetricsCollector()
@@ -107,9 +98,7 @@ class TestSortingCorrectness:
         assert all(result[i] <= result[i + 1] for i in range(len(result) - 1))
 
     @pytest.mark.parametrize("algorithm_class,name", ALL_SORTING_ALGORITHMS)
-    def test_sorts_uniform_data(
-        self, algorithm_class: Type[Algorithm], name: str
-    ) -> None:
+    def test_sorts_uniform_data(self, algorithm_class: Type[Algorithm], name: str) -> None:
         """Test sorting data where all elements are identical."""
         algorithm = algorithm_class()
         collector = DefaultMetricsCollector()
@@ -121,9 +110,7 @@ class TestSortingCorrectness:
         assert all(x == 42 for x in result)
 
     @pytest.mark.parametrize("algorithm_class,name", ALL_SORTING_ALGORITHMS)
-    def test_sorts_nearly_sorted_data(
-        self, algorithm_class: Type[Algorithm], name: str
-    ) -> None:
+    def test_sorts_nearly_sorted_data(self, algorithm_class: Type[Algorithm], name: str) -> None:
         """Test sorting nearly sorted data (good case for adaptive algorithms)."""
         algorithm = algorithm_class()
         collector = DefaultMetricsCollector()
@@ -135,9 +122,7 @@ class TestSortingCorrectness:
         assert all(result[i] <= result[i + 1] for i in range(len(result) - 1))
 
     @pytest.mark.parametrize("algorithm_class,name", ALL_SORTING_ALGORITHMS)
-    def test_sorts_single_element(
-        self, algorithm_class: Type[Algorithm], name: str
-    ) -> None:
+    def test_sorts_single_element(self, algorithm_class: Type[Algorithm], name: str) -> None:
         """Test sorting array with single element."""
         algorithm = algorithm_class()
         collector = DefaultMetricsCollector()
@@ -148,9 +133,7 @@ class TestSortingCorrectness:
         assert result == [42]
 
     @pytest.mark.parametrize("algorithm_class,name", ALL_SORTING_ALGORITHMS)
-    def test_sorts_empty_array(
-        self, algorithm_class: Type[Algorithm], name: str
-    ) -> None:
+    def test_sorts_empty_array(self, algorithm_class: Type[Algorithm], name: str) -> None:
         """Test sorting empty array."""
         algorithm = algorithm_class()
         collector = DefaultMetricsCollector()
@@ -161,12 +144,9 @@ class TestSortingCorrectness:
         assert result == []
 
     @pytest.mark.parametrize("algorithm_class,name", ALL_SORTING_ALGORITHMS)
-    def test_sorts_two_elements(
-        self, algorithm_class: Type[Algorithm], name: str
-    ) -> None:
+    def test_sorts_two_elements(self, algorithm_class: Type[Algorithm], name: str) -> None:
         """Test sorting array with two elements."""
         algorithm = algorithm_class()
-        collector = DefaultMetricsCollector()
 
         # Test both orderings
         result1 = algorithm.execute([2, 1], DefaultMetricsCollector())
@@ -176,9 +156,7 @@ class TestSortingCorrectness:
         assert result2 == [1, 2]
 
     @pytest.mark.parametrize("algorithm_class,name", ALL_SORTING_ALGORITHMS)
-    def test_sorts_negative_numbers(
-        self, algorithm_class: Type[Algorithm], name: str
-    ) -> None:
+    def test_sorts_negative_numbers(self, algorithm_class: Type[Algorithm], name: str) -> None:
         """Test sorting array with negative numbers."""
         algorithm = algorithm_class()
         collector = DefaultMetricsCollector()
@@ -189,9 +167,7 @@ class TestSortingCorrectness:
         assert result == [-7, -3, -1, 0, 2, 5, 8]
 
     @pytest.mark.parametrize("algorithm_class,name", ALL_SORTING_ALGORITHMS)
-    def test_does_not_modify_input(
-        self, algorithm_class: Type[Algorithm], name: str
-    ) -> None:
+    def test_does_not_modify_input(self, algorithm_class: Type[Algorithm], name: str) -> None:
         """Test that algorithm doesn't modify the input array."""
         algorithm = algorithm_class()
         collector = DefaultMetricsCollector()
@@ -217,26 +193,27 @@ class TestSortingStability:
         Returns tuples of (key, label) where stability can be verified
         by checking if equal keys maintain their original order.
         """
-        return [
-            (3, 'a'), (1, 'b'), (3, 'c'), (2, 'd'),
-            (1, 'e'), (3, 'f'), (2, 'g'), (1, 'h')
-        ]
+        return [(3, "a"), (1, "b"), (3, "c"), (2, "d"), (1, "e"), (3, "f"), (2, "g"), (1, "h")]
 
-    @pytest.mark.parametrize("algorithm_class,expected_stable", [
-        (MergeSort, True),
-        (BubbleSort, True),
-        (InsertionSort, True),
-        (QuickSort, False),
-        (SelectionSort, False),
-        (HeapSort, False),
-    ])
+    @pytest.mark.parametrize(
+        "algorithm_class,expected_stable",
+        [
+            (MergeSort, True),
+            (BubbleSort, True),
+            (InsertionSort, True),
+            (QuickSort, False),
+            (SelectionSort, False),
+            (HeapSort, False),
+        ],
+    )
     def test_stability(
         self,
         algorithm_class: Type[Algorithm],
         expected_stable: bool,
-        stable_data: list[tuple[int, str]]
+        stable_data: list[tuple[int, str]],
     ) -> None:
         """Test whether algorithm maintains stability for equal elements."""
+
         # Create a custom comparable class that tracks original position
         class TrackedValue:
             def __init__(self, key: int, label: str):
@@ -278,9 +255,9 @@ class TestSortingStability:
             # Key 1: should be [b, e, h]
             # Key 2: should be [d, g]
             # Key 3: should be [a, c, f]
-            assert groups[1] == ['b', 'e', 'h'], f"{algorithm_class.__name__} failed stability test"
-            assert groups[2] == ['d', 'g'], f"{algorithm_class.__name__} failed stability test"
-            assert groups[3] == ['a', 'c', 'f'], f"{algorithm_class.__name__} failed stability test"
+            assert groups[1] == ["b", "e", "h"], f"{algorithm_class.__name__} failed stability test"
+            assert groups[2] == ["d", "g"], f"{algorithm_class.__name__} failed stability test"
+            assert groups[3] == ["a", "c", "f"], f"{algorithm_class.__name__} failed stability test"
 
 
 class TestSortingMetrics:
@@ -463,9 +440,7 @@ class TestSortingEdgeCases:
     """Test suite for edge cases and special scenarios."""
 
     @pytest.mark.parametrize("algorithm_class,name", ALL_SORTING_ALGORITHMS)
-    def test_large_dataset(
-        self, algorithm_class: Type[Algorithm], name: str
-    ) -> None:
+    def test_large_dataset(self, algorithm_class: Type[Algorithm], name: str) -> None:
         """Test sorting large dataset (performance test)."""
         algorithm = algorithm_class()
         collector = DefaultMetricsCollector()
@@ -482,9 +457,7 @@ class TestSortingEdgeCases:
         assert result == sorted(data)
 
     @pytest.mark.parametrize("algorithm_class,name", ALL_SORTING_ALGORITHMS)
-    def test_alternating_values(
-        self, algorithm_class: Type[Algorithm], name: str
-    ) -> None:
+    def test_alternating_values(self, algorithm_class: Type[Algorithm], name: str) -> None:
         """Test sorting alternating high/low values."""
         algorithm = algorithm_class()
         collector = DefaultMetricsCollector()
@@ -495,9 +468,7 @@ class TestSortingEdgeCases:
         assert result == sorted(data)
 
     @pytest.mark.parametrize("algorithm_class,name", ALL_SORTING_ALGORITHMS)
-    def test_power_of_two_sizes(
-        self, algorithm_class: Type[Algorithm], name: str
-    ) -> None:
+    def test_power_of_two_sizes(self, algorithm_class: Type[Algorithm], name: str) -> None:
         """Test sorting arrays with power-of-two sizes."""
         algorithm = algorithm_class()
 
@@ -555,9 +526,7 @@ class TestSortingPropertyBased:
 
     @pytest.mark.parametrize("algorithm_class,name", ALL_SORTING_ALGORITHMS)
     @pytest.mark.parametrize("seed", [1, 42, 100, 999, 12345])
-    def test_idempotent(
-        self, algorithm_class: Type[Algorithm], name: str, seed: int
-    ) -> None:
+    def test_idempotent(self, algorithm_class: Type[Algorithm], name: str, seed: int) -> None:
         """Test that sorting twice produces same result as sorting once."""
         algorithm = algorithm_class()
         data = random_data(50, seed=seed)
@@ -568,9 +537,7 @@ class TestSortingPropertyBased:
         assert result1 == result2
 
     @pytest.mark.parametrize("algorithm_class,name", ALL_SORTING_ALGORITHMS)
-    def test_permutation_invariance(
-        self, algorithm_class: Type[Algorithm], name: str
-    ) -> None:
+    def test_permutation_invariance(self, algorithm_class: Type[Algorithm], name: str) -> None:
         """Test that result contains same elements as input (permutation)."""
         algorithm = algorithm_class()
         collector = DefaultMetricsCollector()
@@ -586,12 +553,11 @@ class TestSortingPropertyBased:
 
         # Check element counts match
         from collections import Counter
+
         assert Counter(result) == Counter(data)
 
     @pytest.mark.parametrize("algorithm_class,name", ALL_SORTING_ALGORITHMS)
-    def test_minimum_element_first(
-        self, algorithm_class: Type[Algorithm], name: str
-    ) -> None:
+    def test_minimum_element_first(self, algorithm_class: Type[Algorithm], name: str) -> None:
         """Test that minimum element is always first after sorting."""
         algorithm = algorithm_class()
         collector = DefaultMetricsCollector()
@@ -602,9 +568,7 @@ class TestSortingPropertyBased:
         assert result[0] == min(data)
 
     @pytest.mark.parametrize("algorithm_class,name", ALL_SORTING_ALGORITHMS)
-    def test_maximum_element_last(
-        self, algorithm_class: Type[Algorithm], name: str
-    ) -> None:
+    def test_maximum_element_last(self, algorithm_class: Type[Algorithm], name: str) -> None:
         """Test that maximum element is always last after sorting."""
         algorithm = algorithm_class()
         collector = DefaultMetricsCollector()

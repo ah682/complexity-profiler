@@ -1,9 +1,9 @@
 """Configuration management for Big-O Complexity Analyzer."""
 
+import os
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Optional
-import os
 
 try:
     import tomllib

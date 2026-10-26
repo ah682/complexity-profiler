@@ -2,6 +2,13 @@
 
 Comprehensive test suite for the Big-O Complexity Analyzer project with excellent coverage of core functionality.
 
+The pytest bootstrap selects Matplotlib's noninteractive `Agg` backend before
+collecting chart tests; CI also sets `MPLBACKEND=Agg`. Tests inspect actual figure
+coordinates and exported PNG files without requiring a desktop or a working
+Tk/Tcl installation. They do not validate interactive windows or GUI backends.
+This choice is confined to pytest/CI and does not change the backend selected by
+normal package users.
+
 ## Test Structure
 
 ```

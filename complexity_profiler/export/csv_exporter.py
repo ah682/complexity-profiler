@@ -7,7 +7,6 @@ comprehensive statistics.
 """
 
 from pathlib import Path
-from typing import Optional
 
 import pandas as pd
 
@@ -61,36 +60,46 @@ def export_to_csv(
 
             # Calculate mean metrics across all runs for this input size
             row = {
-                'input_size': input_size,
-                'num_runs': len(metrics_list),
-                'algorithm': result.algorithm_name,
-                'category': result.category,
+                "input_size": input_size,
+                "num_runs": len(metrics_list),
+                "algorithm": result.algorithm_name,
+                "category": result.category,
             }
 
             # Add mean metrics
             if metrics_list:
-                row['mean_comparisons'] = sum(m.comparisons for m in metrics_list) / len(metrics_list)
-                row['mean_swaps'] = sum(m.swaps for m in metrics_list) / len(metrics_list)
-                row['mean_accesses'] = sum(m.accesses for m in metrics_list) / len(metrics_list)
-                row['mean_recursive_calls'] = sum(m.recursive_calls for m in metrics_list) / len(metrics_list)
-                row['mean_memory_operations'] = sum(m.memory_operations for m in metrics_list) / len(metrics_list)
-                row['mean_execution_time'] = sum(m.execution_time for m in metrics_list) / len(metrics_list)
-                row['mean_total_operations'] = sum(m.total_operations() for m in metrics_list) / len(metrics_list)
+                row["mean_comparisons"] = sum(m.comparisons for m in metrics_list) / len(
+                    metrics_list
+                )
+                row["mean_swaps"] = sum(m.swaps for m in metrics_list) / len(metrics_list)
+                row["mean_accesses"] = sum(m.accesses for m in metrics_list) / len(metrics_list)
+                row["mean_recursive_calls"] = sum(m.recursive_calls for m in metrics_list) / len(
+                    metrics_list
+                )
+                row["mean_memory_operations"] = sum(
+                    m.memory_operations for m in metrics_list
+                ) / len(metrics_list)
+                row["mean_execution_time"] = sum(m.execution_time for m in metrics_list) / len(
+                    metrics_list
+                )
+                row["mean_total_operations"] = sum(
+                    m.total_operations() for m in metrics_list
+                ) / len(metrics_list)
 
                 # Add min/max for execution time
-                row['min_execution_time'] = min(m.execution_time for m in metrics_list)
-                row['max_execution_time'] = max(m.execution_time for m in metrics_list)
+                row["min_execution_time"] = min(m.execution_time for m in metrics_list)
+                row["max_execution_time"] = max(m.execution_time for m in metrics_list)
 
             # Add statistics
             if statistics:
-                row['stat_mean'] = statistics.mean
-                row['stat_median'] = statistics.median
-                row['stat_std_dev'] = statistics.std_dev
-                row['stat_min'] = statistics.min
-                row['stat_max'] = statistics.max
-                row['stat_p25'] = statistics.percentile_25
-                row['stat_p75'] = statistics.percentile_75
-                row['stat_cv'] = statistics.coefficient_of_variation
+                row["stat_mean"] = statistics.mean
+                row["stat_median"] = statistics.median
+                row["stat_std_dev"] = statistics.std_dev
+                row["stat_min"] = statistics.min
+                row["stat_max"] = statistics.max
+                row["stat_p25"] = statistics.percentile_25
+                row["stat_p75"] = statistics.percentile_75
+                row["stat_cv"] = statistics.coefficient_of_variation
 
             rows.append(row)
 
@@ -99,7 +108,7 @@ def export_to_csv(
 
         # Create DataFrame and write to CSV
         df = pd.DataFrame(rows)
-        df.to_csv(file_path, index=False, encoding='utf-8')
+        df.to_csv(file_path, index=False, encoding="utf-8")
 
     except ValueError as e:
         raise ExportError(
@@ -153,18 +162,18 @@ def export_metrics_summary_csv(
         # Create summary row
         summary = result.get_summary()
         summary_data = {
-            'algorithm_name': summary['algorithm_name'],
-            'category': summary['category'],
-            'input_sizes': ','.join(map(str, summary['input_sizes'])),
-            'empirical_complexity': summary['empirical_complexity'],
-            'r_squared': summary['r_squared'],
-            'timestamp': summary['timestamp'],
-            'notes': summary['notes'],
+            "algorithm_name": summary["algorithm_name"],
+            "category": summary["category"],
+            "input_sizes": ",".join(map(str, summary["input_sizes"])),
+            "empirical_complexity": summary["empirical_complexity"],
+            "r_squared": summary["r_squared"],
+            "timestamp": summary["timestamp"],
+            "notes": summary["notes"],
         }
 
         # Convert to DataFrame and write
         df = pd.DataFrame([summary_data])
-        df.to_csv(file_path, index=False, encoding='utf-8')
+        df.to_csv(file_path, index=False, encoding="utf-8")
 
     except (IOError, OSError) as e:
         raise ExportError(
@@ -212,15 +221,13 @@ def load_from_csv(
         file_path = Path(file_path)
 
         # Read CSV file
-        df = pd.read_csv(file_path, encoding='utf-8')
+        df = pd.read_csv(file_path, encoding="utf-8")
 
         # Validate that data matches expected algorithm
         if not df.empty:
-            if (df['algorithm'].iloc[0] != algorithm_name or
-                df['category'].iloc[0] != category):
+            if df["algorithm"].iloc[0] != algorithm_name or df["category"].iloc[0] != category:
                 raise ValueError(
-                    f"CSV data does not match expected algorithm: "
-                    f"{algorithm_name} ({category})"
+                    f"CSV data does not match expected algorithm: " f"{algorithm_name} ({category})"
                 )
 
         return df
