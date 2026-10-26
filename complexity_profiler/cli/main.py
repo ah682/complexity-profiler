@@ -12,6 +12,7 @@ import click
 from rich.console import Console
 from rich.table import Table
 
+from complexity_profiler import __version__
 from complexity_profiler.algorithms.base import Algorithm
 from complexity_profiler.algorithms.searching import (
     BinarySearch,
@@ -55,7 +56,7 @@ ALGORITHMS: dict[str, Algorithm[Any]] = {
 
 
 @click.group()
-@click.version_option(version="1.0.0", prog_name="Big-O Complexity Analyzer")
+@click.version_option(version=__version__, prog_name="Big-O Complexity Analyzer")
 @click.option("--verbose", "-v", is_flag=True, help="Enable verbose output")
 @click.option("--log-file", type=click.Path(), help="Path to log file")
 @click.pass_context

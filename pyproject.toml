@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "complexity-profiler"
-version = "1.0.0"
+version = "1.0.1"
 description = "Educational algorithm profiling and empirical growth-curve comparison"
 authors = [{name = "ah682"}]
 readme = "README.md"

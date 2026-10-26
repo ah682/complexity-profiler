@@ -1,226 +1,160 @@
-"""
-Quick verification script for Phase 1 implementation.
-Tests the three core modules: exceptions, logging_config, and metrics.
-"""
+"""Collected regression checks for the Phase 1 exception, logging and metrics APIs."""
 
-import sys
-from pathlib import Path
+import logging
+import math
+from types import SimpleNamespace
 
-# Add the project root to path
-project_root = Path(__file__).parent
-sys.path.insert(0, str(project_root))
+import pytest
 
-print("=" * 70)
-print("Phase 1 Implementation Verification")
-print("=" * 70)
+from complexity_profiler.analysis import metrics as metrics_module
+from complexity_profiler.analysis.metrics import (
+    AggregateMetricsCollector,
+    DefaultMetricsCollector,
+    PerformanceMetrics,
+    ThreadSafeMetricsCollector,
+    measure_time,
+)
+from complexity_profiler.utils.exceptions import (
+    AlgorithmError,
+    BigOComplexityError,
+    ConfigurationError,
+    CurveFittingError,
+    DataGenerationError,
+    ExportError,
+    ProfilingError,
+)
+from complexity_profiler.utils.logging_config import get_logger, set_module_level, setup_logging
 
-# Test 1: Import all modules
-print("\n1. Testing imports...")
-try:
-    from complexity_profiler.utils.exceptions import (
+
+@pytest.mark.parametrize(
+    "error_type",
+    [
         AlgorithmError,
-        BigOComplexityError,
-        ConfigurationError,
-        CurveFittingError,
-        DataGenerationError,
-        ExportError,
-        ProfilingError,
-    )
-
-    for error_type in (
         DataGenerationError,
         ProfilingError,
         CurveFittingError,
         ConfigurationError,
         ExportError,
-    ):
-        try:
-            raise error_type("import and hierarchy check")
-        except BigOComplexityError as error:
-            assert error.message == "import and hierarchy check"
-    print("   ✓ exceptions module imported successfully")
-except Exception as e:
-    print(f"   ✗ Failed to import exceptions: {e}")
-    sys.exit(1)
+    ],
+)
+def test_exception_imports_and_hierarchy(error_type: type[BigOComplexityError]) -> None:
+    with pytest.raises(BigOComplexityError) as caught:
+        raise error_type("import and hierarchy check")
+    assert caught.value.message == "import and hierarchy check"
 
-try:
-    from complexity_profiler.utils.logging_config import (
-        get_logger,
-        set_module_level,
-        setup_logging,
+
+def test_base_exception_details_and_algorithm_context() -> None:
+    assert str(BigOComplexityError("Test error", details={"key": "value"})) == (
+        "Test error (key=value)"
     )
+    error = AlgorithmError("Algorithm failed", algorithm_name="quicksort")
+    assert error.algorithm_name == "quicksort"
 
-    print("   ✓ logging_config module imported successfully")
-except Exception as e:
-    print(f"   ✗ Failed to import logging_config: {e}")
-    sys.exit(1)
 
-try:
-    from complexity_profiler.analysis.metrics import (
-        AggregateMetricsCollector,
-        DefaultMetricsCollector,
-        PerformanceMetrics,
-        ThreadSafeMetricsCollector,
-        measure_time,
-    )
-
-    print("   ✓ metrics module imported successfully")
-except Exception as e:
-    print(f"   ✗ Failed to import metrics: {e}")
-    sys.exit(1)
-
-# Test 2: Test exception hierarchy
-print("\n2. Testing exception hierarchy...")
-try:
-    # Test base exception
+def test_logging_configuration() -> None:
+    root = logging.getLogger()
+    handlers, level = root.handlers[:], root.level
+    module_logger = get_logger("phase1_verification")
+    module_level = module_logger.level
     try:
-        raise BigOComplexityError("Test error", details={"key": "value"})
-    except BigOComplexityError as e:
-        assert str(e) == "Test error (key=value)"
+        assert setup_logging(level="INFO", enable_rich=False) is root
+        assert any(handler.level == logging.INFO for handler in root.handlers)
+        assert get_logger("phase1_verification") is module_logger
+        set_module_level("phase1_verification", "DEBUG")
+        assert module_logger.level == logging.DEBUG
+    finally:
+        for handler in root.handlers:
+            if handler not in handlers:
+                handler.close()
+        root.handlers = handlers
+        root.setLevel(level)
+        module_logger.setLevel(module_level)
 
-    # Test AlgorithmError
-    try:
-        raise AlgorithmError("Algorithm failed", algorithm_name="quicksort")
-    except AlgorithmError as e:
-        assert e.algorithm_name == "quicksort"
 
-    print("   ✓ Exception hierarchy working correctly")
-except Exception as e:
-    print(f"   ✗ Exception tests failed: {e}")
-    sys.exit(1)
-
-# Test 3: Test logging configuration
-print("\n3. Testing logging configuration...")
-try:
-    logger = setup_logging(level="INFO", enable_rich=False)
-    assert logger is not None
-
-    module_logger = get_logger(__name__)
-    assert module_logger is not None
-
-    set_module_level("test_module", "DEBUG")
-
-    print("   ✓ Logging configuration working correctly")
-except Exception as e:
-    print(f"   ✗ Logging tests failed: {e}")
-    sys.exit(1)
-
-# Test 4: Test metrics collection
-print("\n4. Testing metrics collection...")
-try:
-    # Test PerformanceMetrics
+def test_performance_metrics_total_operations() -> None:
     metrics = PerformanceMetrics(comparisons=10, swaps=5)
     assert metrics.comparisons == 10
     assert metrics.total_operations() == 15
 
-    # Test DefaultMetricsCollector
-    collector = DefaultMetricsCollector()
+
+@pytest.mark.parametrize("collector_type", [DefaultMetricsCollector, ThreadSafeMetricsCollector])
+def test_collectors_record_operations_and_timing(
+    collector_type: type[DefaultMetricsCollector] | type[ThreadSafeMetricsCollector],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    ticks = iter([20.0, 20.125])
+    monkeypatch.setattr(metrics_module, "time", SimpleNamespace(perf_counter=lambda: next(ticks)))
+    collector = collector_type()
     collector.record_comparison()
     collector.record_swap()
-    collector.record_access()
-
-    with collector.timing():
-        pass  # Quick operation
-
-    result = collector.get_metrics()
-    assert result.comparisons == 1
-    assert result.swaps == 1
-    assert result.accesses == 1
-    assert result.execution_time > 0
-
-    print("   ✓ Metrics collection working correctly")
-except Exception as e:
-    print(f"   ✗ Metrics tests failed: {e}")
-    import traceback
-
-    traceback.print_exc()
-    sys.exit(1)
-
-# Test 5: Test ThreadSafeMetricsCollector
-print("\n5. Testing thread-safe metrics collector...")
-try:
-    collector = ThreadSafeMetricsCollector()
-    collector.record_comparison()
-    collector.record_swap()
-
     with collector.timing():
         collector.record_access()
-
     result = collector.get_metrics()
-    assert result.comparisons == 1
-    assert result.swaps == 1
-    assert result.accesses == 1
+    assert (result.comparisons, result.swaps, result.accesses) == (1, 1, 1)
+    assert result.execution_time == 0.125
 
-    print("   ✓ Thread-safe collector working correctly")
-except Exception as e:
-    print(f"   ✗ Thread-safe collector tests failed: {e}")
-    sys.exit(1)
 
-# Test 6: Test protocol compliance
-print("\n6. Testing MetricsCollector protocol compliance...")
-try:
-    # Test that both collectors implement the protocol
-    default_collector = DefaultMetricsCollector()
-    thread_safe_collector = ThreadSafeMetricsCollector()
-
-    # Both should have all required protocol methods
-    for method in [
+@pytest.mark.parametrize("collector_type", [DefaultMetricsCollector, ThreadSafeMetricsCollector])
+def test_collector_protocol_operations_and_reset(
+    collector_type: type[DefaultMetricsCollector] | type[ThreadSafeMetricsCollector],
+) -> None:
+    collector = collector_type()
+    for method in (
         "record_comparison",
         "record_swap",
         "record_access",
         "record_recursive_call",
         "get_metrics",
         "reset",
-    ]:
-        assert hasattr(default_collector, method)
-        assert hasattr(thread_safe_collector, method)
+    ):
+        assert callable(getattr(collector, method))
+    collector.record_comparison()
+    collector.record_swap()
+    collector.record_access()
+    collector.record_recursive_call()
+    assert collector.get_metrics().total_operations() == 4
+    collector.reset()
+    assert collector.get_metrics().total_operations() == 0
 
-    print("   ✓ Protocol compliance verified")
-except Exception as e:
-    print(f"   ✗ Protocol compliance tests failed: {e}")
-    sys.exit(1)
 
-# Test 7: Test AggregateMetricsCollector
-print("\n7. Testing aggregate metrics collector...")
-try:
+def test_aggregate_metrics_collector() -> None:
     aggregate = AggregateMetricsCollector()
-
-    for i in range(3):
+    for comparisons in (1, 2, 3):
         collector = DefaultMetricsCollector()
-        for _ in range(i + 1):
+        for _ in range(comparisons):
             collector.record_comparison()
         aggregate.add_metrics(collector.get_metrics())
-
     summary = aggregate.get_summary()
     assert summary["runs"] == 3
-    assert summary["mean_comparisons"] == 2.0  # (1 + 2 + 3) / 3
+    assert summary["mean_comparisons"] == 2.0
 
-    print("   ✓ Aggregate collector working correctly")
-except Exception as e:
-    print(f"   ✗ Aggregate collector tests failed: {e}")
-    sys.exit(1)
 
-# Test 8: Test measure_time utility
-print("\n8. Testing measure_time utility...")
-try:
-    import time
-
-    elapsed = []
+@pytest.mark.parametrize("end", [41.0, 41.125])
+def test_measure_time_records_clock_difference_on_context_exit(
+    monkeypatch: pytest.MonkeyPatch, end: float
+) -> None:
+    ticks = iter([41.0, end])
+    monkeypatch.setattr(metrics_module, "time", SimpleNamespace(perf_counter=lambda: next(ticks)))
     with measure_time() as elapsed:
-        time.sleep(0.01)  # Sleep for 10ms
+        assert elapsed == [0.0]
+    assert elapsed == [end - 41.0]
 
-    assert elapsed[0] >= 0.01
-    print(f"   ✓ measure_time utility working correctly (measured: {elapsed[0]:.4f}s)")
-except Exception as e:
-    print(f"   ✗ measure_time tests failed: {e}")
-    sys.exit(1)
 
-print("\n" + "=" * 70)
-print("All Phase 1 tests passed successfully!")
-print("=" * 70)
-print("\nImplemented components:")
-print("  • Custom exception hierarchy (7 exception classes)")
-print("  • Logging configuration with rich support")
-print("  • Metrics collection system with thread-safety")
-print("  • Full MetricsCollector protocol compliance")
-print("=" * 70)
+def test_measure_time_records_elapsed_time_when_body_raises(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    ticks = iter([80.0, 80.25])
+    monkeypatch.setattr(metrics_module, "time", SimpleNamespace(perf_counter=lambda: next(ticks)))
+    with pytest.raises(ValueError, match="body failed"):
+        with measure_time() as elapsed:
+            raise ValueError("body failed")
+    assert elapsed == [0.25]
+
+
+def test_measure_time_real_clock_smoke() -> None:
+    with measure_time() as elapsed:
+        result = sum(range(100))
+    assert result == 4950
+    assert len(elapsed) == 1
+    assert math.isfinite(elapsed[0])
+    assert elapsed[0] >= 0

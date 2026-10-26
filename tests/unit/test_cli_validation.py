@@ -127,3 +127,18 @@ def test_logging_writes_file_and_replaces_handlers(tmp_path):
                 handler.close()
         root.handlers = old_handlers
         root.setLevel(old_level)
+
+
+def test_cli_version_matches_imported_and_installed_package():
+    from importlib.metadata import version
+
+    from click.testing import CliRunner
+
+    from complexity_profiler import __version__
+    from complexity_profiler.cli.main import cli
+
+    installed_version = version("complexity-profiler")
+    assert __version__ == installed_version
+    result = CliRunner().invoke(cli, ["--version"])
+    assert result.exit_code == 0, result.output
+    assert result.output.strip().rsplit(" ", 1)[-1] == installed_version

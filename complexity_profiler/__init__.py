@@ -1,6 +1,6 @@
 """Big-O Complexity Analyzer - Empirical algorithm complexity analysis."""
 
-__version__ = "1.0.0"
+__version__ = "1.0.1"
 __author__ = "ah682"
 
 from complexity_profiler.algorithms.base import (

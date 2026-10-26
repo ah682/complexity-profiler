@@ -1,6 +1,6 @@
 # Release notes
 
-## Unreleased
+## 1.0.1 — 26 October 2026
 
 - Correct timing-scale-dependent R² and enforce the minimum acceptable fit score.
 - Use normalized affine least squares with nonnegative growth coefficients and
@@ -17,3 +17,8 @@
 - Stabilize polynomial bases for extreme finite sizes, normalize nonzero basis
   magnitudes without an absolute floor, and report unrepresentable candidates as
   inconclusive. Public curve-function coefficients remain unchanged.
+
+- Collect Phase 1 checks as pytest tests and verify timing against exact clock
+  differences rather than platform-specific sleep durations. Preserve real-clock
+  smoke coverage and the full 85% coverage gate.
+- Keep package, module and CLI version reporting in agreement for the release.

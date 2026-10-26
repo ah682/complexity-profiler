@@ -6,7 +6,7 @@ and AggregateMetricsCollector classes to ensure accurate tracking of
 algorithm operations and performance measurements.
 """
 
-import time
+from types import SimpleNamespace
 
 import pytest
 
@@ -15,6 +15,15 @@ from complexity_profiler.analysis.metrics import (
     DefaultMetricsCollector,
     PerformanceMetrics,
 )
+
+
+def set_clock(monkeypatch: pytest.MonkeyPatch, *values: float) -> None:
+    """Inject only the collector's clock boundary, leaving framework clocks real."""
+    ticks = iter(values)
+    monkeypatch.setattr(
+        "complexity_profiler.analysis.metrics.time",
+        SimpleNamespace(perf_counter=lambda: next(ticks)),
+    )
 
 
 class TestPerformanceMetrics:
@@ -257,41 +266,36 @@ class TestDefaultMetricsCollector:
 
         assert metrics.memory_usage == 4096
 
-    def test_timing_context_manager(self, metrics_collector: DefaultMetricsCollector) -> None:
-        """Test timing using context manager."""
+    def test_timing_context_manager(
+        self, metrics_collector: DefaultMetricsCollector, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Record the elapsed clock difference, independent of scheduler speed."""
+        set_clock(monkeypatch, 10.0, 10.125)
         with metrics_collector.timing():
-            time.sleep(0.01)  # Sleep for 10ms
-
+            metrics_collector.record_access()
         metrics = metrics_collector.get_metrics()
-
-        assert metrics.execution_time >= 0.01
-        assert metrics.execution_time < 0.1  # Should be less than 100ms
+        assert metrics.execution_time == 0.125
+        assert metrics.accesses == 1
 
     def test_timing_context_manager_with_exception(
-        self, metrics_collector: DefaultMetricsCollector
+        self, metrics_collector: DefaultMetricsCollector, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        """Test that timing context manager handles exceptions properly."""
-        try:
+        """Record elapsed time while preserving the body's exception."""
+        set_clock(monkeypatch, 20.0, 20.25)
+        with pytest.raises(ValueError, match="Test exception"):
             with metrics_collector.timing():
-                time.sleep(0.01)
                 raise ValueError("Test exception")
-        except ValueError:
-            pass
+        assert metrics_collector.get_metrics().execution_time == 0.25
 
-        metrics = metrics_collector.get_metrics()
-
-        # Time should still be recorded even when exception occurs
-        assert metrics.execution_time >= 0.01
-
-    def test_start_stop_timing(self, metrics_collector: DefaultMetricsCollector) -> None:
-        """Test manual start and stop timing."""
+    def test_start_stop_timing(
+        self, metrics_collector: DefaultMetricsCollector, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Return and store the difference between start and stop readings."""
+        set_clock(monkeypatch, 30.0, 30.5)
         metrics_collector.start_timing()
-        time.sleep(0.01)
         elapsed = metrics_collector.stop_timing()
-
-        assert elapsed >= 0.01
-        metrics = metrics_collector.get_metrics()
-        assert metrics.execution_time >= 0.01
+        assert elapsed == 0.5
+        assert metrics_collector.get_metrics().execution_time == 0.5
 
     def test_stop_timing_without_start_raises_error(
         self, metrics_collector: DefaultMetricsCollector
@@ -301,42 +305,36 @@ class TestDefaultMetricsCollector:
             metrics_collector.stop_timing()
 
     def test_get_execution_time_while_running(
-        self, metrics_collector: DefaultMetricsCollector
+        self, metrics_collector: DefaultMetricsCollector, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        """Test getting execution time while timer is running."""
+        """Live elapsed time grows until the stop reading is stored."""
+        set_clock(monkeypatch, 40.0, 40.125, 40.5)
         metrics_collector.start_timing()
-        time.sleep(0.01)
-
-        elapsed = metrics_collector.get_execution_time()
-
-        assert elapsed >= 0.01
-        metrics_collector.stop_timing()
+        assert metrics_collector.get_execution_time() == 0.125
+        assert metrics_collector.stop_timing() == 0.5
+        assert metrics_collector.get_execution_time() == 0.5
 
     def test_get_execution_time_after_stop(
-        self, metrics_collector: DefaultMetricsCollector
+        self, metrics_collector: DefaultMetricsCollector, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        """Test getting execution time after timing has stopped."""
+        """After stopping, return stored elapsed time without reading the clock."""
+        set_clock(monkeypatch, 50.0, 50.25)
         metrics_collector.start_timing()
-        time.sleep(0.01)
         metrics_collector.stop_timing()
+        assert metrics_collector.get_execution_time() == 0.25
 
-        elapsed = metrics_collector.get_execution_time()
-
-        assert elapsed >= 0.01
-
-    def test_reset(self, metrics_collector: DefaultMetricsCollector) -> None:
-        """Test resetting all metrics to zero."""
-        # Record some operations
+    def test_reset(
+        self, metrics_collector: DefaultMetricsCollector, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Reset both operation counters and a known nonzero elapsed time."""
+        set_clock(monkeypatch, 60.0, 60.5)
         metrics_collector.record_comparison()
         metrics_collector.record_swap()
         metrics_collector.record_access()
         with metrics_collector.timing():
-            time.sleep(0.01)
-
-        # Reset
+            pass
+        assert metrics_collector.get_metrics().execution_time == 0.5
         metrics_collector.reset()
-
-        # All metrics should be zero
         metrics = metrics_collector.get_metrics()
         assert metrics.comparisons == 0
         assert metrics.swaps == 0
