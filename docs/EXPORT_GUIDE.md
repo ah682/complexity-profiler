@@ -1,334 +1,100 @@
-# Export Functionality Guide
+# Exporting results
 
-This document provides comprehensive information about the export functionality for the Big-O Complexity Analyzer.
+Use JSON to save a profile for later inspection. Use CSV to compare per-size
+aggregates in a spreadsheet or pandas. Both formats accept a `ProfileResult`
+and create missing parent directories.
 
-## Overview
+## Profile and export
 
-The export functionality allows you to save profiling results in multiple formats:
-- **JSON**: Full detailed results with all metrics and statistics
-- **CSV**: Tabular format with one row per input size for easy analysis in spreadsheets
-- **Summary CSV**: Quick overview of algorithm characteristics
-
-## Architecture
-
-### Core Components
-
-#### 1. **ProfileResult** (`complexity-profiler/analysis/profiler.py`)
-
-The `ProfileResult` dataclass is the central data structure that holds all profiling results:
-
-```python
-@dataclass
-class ProfileResult:
-    algorithm_name: str                          # Name of profiled algorithm
-    category: str                                # Algorithm category
-    input_sizes: list[int]                       # Tested input sizes
-    metrics_per_size: dict[int, list[PerformanceMetrics]]   # Metrics per size
-    statistics_per_size: dict[int, Statistics]   # Statistics per size
-    empirical_complexity: str                    # Detected complexity (e.g., "O(n log n)")
-    r_squared: float                             # Fit quality (0.0-1.0)
-    timestamp: datetime                          # When profiling was done
-    notes: Optional[str]                         # Optional notes
-```
-
-**Key Methods:**
-- `to_dict()`: Converts ProfileResult to dictionary for serialization
-- `get_summary()`: Returns high-level summary information
-
-#### 2. **JSON Exporter** (`complexity-profiler/export/json_exporter.py`)
-
-Handles JSON serialization with support for numpy types and datetime objects.
-
-**Features:**
-- Custom `NumpyEncoder` for handling numpy types (int64, float64, ndarray, etc.)
-- Pretty printing option with indentation and key sorting
-- Automatic parent directory creation
-- Comprehensive error handling with custom exceptions
-
-**Functions:**
-- `export_to_json(result, file_path, pretty=True)`: Export results to JSON
-- `load_from_json(file_path)`: Load results from JSON file
-
-**Example:**
 ```python
 from pathlib import Path
-from complexity-profiler.export import export_to_json
 
-export_to_json(profile_result, Path("results.json"), pretty=True)
-```
+from complexity_profiler import (
+    AlgorithmProfiler,
+    export_metrics_summary_csv,
+    export_to_csv,
+    export_to_json,
+    load_from_csv,
+    load_from_json,
+)
+from complexity_profiler.algorithms.sorting import MergeSort
+from complexity_profiler.data.generators import random_data
 
-#### 3. **CSV Exporter** (`complexity-profiler/export/csv_exporter.py`)
-
-Converts profiling results to pandas DataFrames for CSV export.
-
-**Features:**
-- One row per input size with aggregated statistics
-- Comprehensive column set covering all metrics and statistics
-- Support for multiple summary metrics (min, max, mean)
-- Data validation before export
-
-**Functions:**
-- `export_to_csv(result, file_path)`: Export full results to CSV
-- `export_metrics_summary_csv(result, file_path)`: Export summary to CSV
-- `load_from_csv(file_path, algorithm_name, category)`: Load CSV data
-
-**CSV Columns:**
-```
-input_size, num_runs, algorithm, category,
-mean_comparisons, mean_swaps, mean_accesses,
-mean_recursive_calls, mean_memory_operations,
-mean_execution_time, mean_total_operations,
-min_execution_time, max_execution_time,
-stat_mean, stat_median, stat_std_dev,
-stat_min, stat_max, stat_p25, stat_p75, stat_cv
-```
-
-## Usage Examples
-
-### Export to JSON (Pretty Printed)
-
-```python
-from datetime import datetime
-from pathlib import Path
-from complexity-profiler.analysis.profiler import ProfileResult
-from complexity-profiler.analysis.metrics import PerformanceMetrics
-from complexity-profiler.analysis.statistics import Statistics
-from complexity-profiler.export import export_to_json
-
-# Create ProfileResult (details omitted for brevity)
-result = ProfileResult(
-    algorithm_name="QuickSort",
-    category="sorting",
-    input_sizes=[100, 1000, 10000],
-    metrics_per_size={...},
-    statistics_per_size={...},
-    empirical_complexity="O(n log n)",
-    r_squared=0.98,
+result = (
+    AlgorithmProfiler()
+    .with_sizes([100, 500, 1000, 5000])
+    .with_runs(5)
+    .with_data_generator(random_data)
+    .profile(MergeSort())
 )
 
-# Export with pretty printing
-export_to_json(result, Path("quicksort_results.json"), pretty=True)
+export_to_json(result, Path("results/merge-sort.json"))
+export_to_csv(result, Path("results/merge-sort.csv"))
+export_metrics_summary_csv(result, Path("results/merge-sort-summary.csv"))
+
+restored = load_from_json(Path("results/merge-sort.json"))
+table = load_from_csv(Path("results/merge-sort.csv"), "Merge Sort", "sorting")
+print(restored.candidate_scores)
+print(table[["input_size", "stat_mean", "stat_std_dev"]])
 ```
 
-**Output JSON (snippet):**
-```json
-{
-  "algorithm_name": "QuickSort",
-  "category": "sorting",
-  "empirical_complexity": "O(n log n)",
-  "input_sizes": [100, 1000, 10000],
-  "metrics_per_size": {
-    "100": [
-      {
-        "accesses": 50,
-        "comparisons": 75,
-        "execution_time": 0.001234,
-        ...
-      }
-    ]
-  },
-  "r_squared": 0.98,
-  ...
-}
-```
+`examples/export_example.py` demonstrates the formats with constructed sample
+measurements. Its supplied fit label is example metadata, not a measured result.
 
-### Export to CSV
+## API
 
-```python
-from complexity-profiler.export import export_to_csv
+| Function | Result |
+| --- | --- |
+| `export_to_json(result, file_path, pretty=True)` | JSON document; set `pretty=False` for compact output. |
+| `load_from_json(file_path)` | Restored `ProfileResult`. |
+| `export_to_csv(result, file_path)` | One row per input size with metrics and statistics. |
+| `export_metrics_summary_csv(result, file_path)` | One row containing the algorithm and fit summary. |
+| `load_from_csv(file_path, algorithm_name, category)` | DataFrame; checks the first row's algorithm and category against the supplied values. |
 
-# Export to CSV for spreadsheet analysis
-export_to_csv(result, Path("quicksort_results.csv"))
-```
+These functions are available from both `complexity_profiler` and
+`complexity_profiler.export`. `NumpyEncoder` is available from the export package
+for callers that need its NumPy scalar/array conversion separately.
 
-**Output CSV (snippet):**
-```csv
-input_size,num_runs,algorithm,category,mean_comparisons,mean_swaps,...
-100,3,QuickSort,sorting,75.0,45.0,...
-1000,3,QuickSort,sorting,750.0,450.0,...
-10000,3,QuickSort,sorting,7500.0,4500.0,...
-```
+## What each format preserves
 
-### Export Summary
+JSON contains the algorithm name, category, input sizes, all per-run metrics,
+per-size statistics, empirical label, R², candidate scores, timestamp and notes.
+Size keys become strings and the timestamp becomes ISO text in the file; loading
+restores integer keys, the timestamp and nested dataclasses. Inconclusive profiles
+keep their explanation and scores.
 
-```python
-from complexity-profiler.export import export_metrics_summary_csv
+The per-size CSV includes:
 
-# Export just the summary
-export_metrics_summary_csv(result, Path("quicksort_summary.csv"))
-```
+- Identity: `algorithm`, `category`, `input_size`, `num_runs`.
+- Mean metrics: `mean_comparisons`, `mean_swaps`, `mean_accesses`,
+  `mean_recursive_calls`, `mean_memory_operations`, `mean_execution_time`,
+  `mean_total_operations`.
+- Timing range: `min_execution_time`, `max_execution_time`.
+- Statistics: `stat_mean`, `stat_median`, `stat_std_dev`, `stat_min`, `stat_max`,
+  `stat_p25`, `stat_p75`, `stat_cv`.
 
-**Output Summary CSV:**
-```csv
-algorithm_name,category,input_sizes,empirical_complexity,r_squared,timestamp,notes
-QuickSort,sorting,100;1000;10000,O(n log n),0.98,2024-12-07T10:30:45.123456,Sample profiling
-```
+Sizes without both metrics and statistics are skipped; a profile with no
+exportable rows raises `ExportError`. CSV does not preserve individual runs or
+candidate scores and cannot reconstruct a `ProfileResult`. The summary CSV uses
+`get_summary()` and is separate from the per-size format expected by `load_from_csv`.
 
-### Load from JSON
-
-```python
-from complexity-profiler.export import load_from_json
-
-# Load previously saved results
-result = load_from_json(Path("quicksort_results.json"))
-print(f"Algorithm: {result.algorithm_name}")
-print(f"Complexity: {result.empirical_complexity}")
-print(f"Fit Quality (R²): {result.r_squared}")
-```
-
-### Load from CSV
-
-```python
-from complexity-profiler.export import load_from_csv
-
-# Load CSV data back into DataFrame
-df = load_from_csv(Path("quicksort_results.csv"), "QuickSort", "sorting")
-print(df[['input_size', 'mean_execution_time']])
-```
-
-## Error Handling
-
-All export functions use custom `ExportError` exceptions for graceful error handling:
-
-```python
-from complexity-profiler.utils.exceptions import ExportError
-from complexity-profiler.export import export_to_json
-
-try:
-    export_to_json(result, Path("/invalid/path/results.json"))
-except ExportError as e:
-    print(f"Export failed: {e.message}")
-    print(f"Details: {e.details}")
-```
-
-**Error Types:**
-- **Serialization Errors**: When data cannot be converted to JSON
-- **I/O Errors**: When file operations fail
-- **Validation Errors**: When data is invalid or incomplete
-- **File Not Found**: When loading from non-existent files
-- **Parse Errors**: When loading malformed CSV/JSON files
-
-## Data Structure Details
-
-### PerformanceMetrics
-
-```python
-@dataclass
-class PerformanceMetrics:
-    comparisons: int           # Comparison operations
-    swaps: int                 # Swap/exchange operations
-    accesses: int              # Array/data structure accesses
-    recursive_calls: int       # Recursive function calls
-    execution_time: float      # Total execution time (seconds)
-    memory_operations: int     # Memory allocation/copy operations
-```
-
-### Statistics
-
-```python
-@dataclass
-class Statistics:
-    mean: float                # Arithmetic mean
-    median: float              # Middle value
-    std_dev: float             # Standard deviation
-    min: float                 # Minimum value
-    max: float                 # Maximum value
-    percentile_25: float       # Q1 (25th percentile)
-    percentile_75: float       # Q3 (75th percentile)
-    coefficient_of_variation: float  # Std dev / mean ratio
-```
-
-## Type Hints and Docstrings
-
-All export functions include:
-- **Complete type hints**: Full signature documentation
-- **Comprehensive docstrings**: Detailed parameter and return value documentation
-- **Usage examples**: Practical code examples in docstrings
-- **Error documentation**: Lists all possible exceptions
-
-Example:
-```python
-def export_to_json(
-    result: ProfileResult,
-    file_path: Path,
-    pretty: bool = True,
-) -> None:
-    """
-    Export profiling results to a JSON file.
-
-    Args:
-        result: ProfileResult object containing the profiling data
-        file_path: Path where the JSON file should be written
-        pretty: If True, format JSON with indentation and sorting
-
-    Raises:
-        ExportError: If the export operation fails
-
-    Example:
-        >>> from pathlib import Path
-        >>> export_to_json(result, Path("results.json"))
-    """
-```
-
-## Performance Considerations
-
-### JSON Export
-- Suitable for complete data preservation
-- Larger file size than CSV
-- Retains all numeric precision
-- Human-readable with pretty printing
-
-### CSV Export
-- Optimized for tabular data analysis
-- Smaller file size
-- One row per input size (aggregated statistics)
-- Compatible with spreadsheet applications
-
-### Memory Usage
-- Both exporters work in-memory
-- Suitable for typical profiling datasets (hundreds to thousands of rows)
-- For very large datasets (>100k rows), consider streaming approaches
-
-## Integration Example
+## Error handling
 
 ```python
 from pathlib import Path
-from complexity-profiler.analysis.profiler import ProfileResult
-from complexity-profiler.export import export_to_json, export_to_csv
+from complexity_profiler import load_from_json
+from complexity_profiler.utils.exceptions import ExportError
 
-def save_profiling_results(result: ProfileResult, output_dir: str) -> None:
-    """Save profiling results in multiple formats."""
-    output_path = Path(output_dir)
-    output_path.mkdir(parents=True, exist_ok=True)
-
-    # Export to both formats
-    json_file = output_path / f"{result.algorithm_name}_results.json"
-    csv_file = output_path / f"{result.algorithm_name}_results.csv"
-
-    export_to_json(result, json_file, pretty=True)
-    export_to_csv(result, csv_file)
-
-    print(f"Results saved to {json_file} and {csv_file}")
-
-# Usage
-save_profiling_results(result, "profiling_results")
+try:
+    restored = load_from_json(Path("results/merge-sort.json"))
+except ExportError as error:
+    print(error)
 ```
 
-## Dependencies
+Export errors identify the format, path and underlying failure. Check the path,
+permissions and input format before retrying. JSON and CSV are assembled in memory,
+so their memory use grows with the profile.
 
-- **json**: Standard library for JSON serialization
-- **pandas**: For DataFrame creation and CSV operations
-- **pathlib**: For path handling
-- **dataclasses**: For dataclass conversion utilities
-- **numpy**: For numpy type handling in JSON encoder
-
-## Future Enhancements
-
-Potential additions to the export functionality:
-- HTML report generation with visualizations
-- Excel export with multiple sheets and formatting
-- SQL database export
-- Streaming export for large datasets
-- Compression support (gzip, bzip2)
-- Data validation schemas
-- Version control for results
+The integration tests in [test_outputs.py](../tests/integration/test_outputs.py)
+cover serialization, nested values, CSV columns and generated charts. Run the
+full suite with `pytest` as described in the [test guide](../tests/README.md).

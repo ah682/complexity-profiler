@@ -1,13 +1,14 @@
 # Complexity Profiler
 
-An educational Python toolkit for measuring algorithms and comparing finite timing
-samples with candidate growth curves. It collects timings and operation counts,
-summarizes repeated runs, exports JSON/CSV, and plots measured trends.
+A Python toolkit for exploring how algorithms behave as their inputs grow. Run
+sorting and searching algorithms, collect timings and operation counts, compare
+growth curves, and export the results as charts, JSON or CSV. Graph algorithms
+are also available through the Python API.
 
-A fitted curve is an empirical estimate, **not a proof of an algorithm's Big-O class**.
-Short runs, interpreter overhead, input distributions, caches and system load can
-make several models indistinguishable. The profiler explicitly reports such cases
-as `Inconclusive` and retains the measurements and candidate scores.
+Use it to compare input patterns, study algorithms and inspect measured trends.
+Curve fits describe the sampled range; they do not prove an algorithm's Big-O
+class. When the measurements cannot distinguish the candidates, the profiler
+returns `Inconclusive` and keeps the raw data and scores for inspection.
 
 ## Install and run
 
@@ -53,7 +54,7 @@ reason appears in `notes` and scores in `candidate_scores`. Successful direct
 fitter calls retain the `(ComplexityClass, r_squared)` return type. Inconclusive
 direct fits raise `InconclusiveFitError`, a `RuntimeError` subclass.
 
-## Fitting assumptions and limitations
+## Interpreting a fit
 
 - Supply at least three **distinct positive** sizes and matching one-dimensional,
   finite, nonnegative timings; at least one timing must be positive. Invalid data
@@ -61,17 +62,13 @@ direct fits raise `InconclusiveFitError`, a `RuntimeError` subclass.
 - Models are constant, logarithmic, linear, linearithmic, quadratic and cubic,
   each with an intercept and a nonnegative growth coefficient. Exponential and
   factorial are enum labels, not supported fit candidates.
-- Timing values are normalized before least squares. Polynomial bases scale sizes
-  before taking powers; the linearithmic basis keeps the original size logarithm.
-  These positive basis scalings preserve each affine model while avoiding numeric
-  overflow/underflow. Public curve functions keep their original coefficient units.
-  An unrepresentable candidate is inconclusive, never a fabricated zero score.
-  Changing seconds to another timing unit does not change the fit. Exactly flat
-  positive samples receive a constant fit; small variation is not treated as flat.
+- The fitter normalizes timings and growth bases to avoid overflow and underflow.
+  Changing timing units does not change the score. Exactly flat positive samples
+  receive a constant fit; small variations are still fitted.
 - A candidate must meet `min_r_squared`. Candidates within 0.02 R² **and** twice
   the best residual error are considered ambiguous, with a 64-machine-epsilon
-  residual floor for numerical equality. This is a documented heuristic, not a
-  confidence interval or a statistical significance test.
+  residual floor for numerical equality. This ambiguity rule is a heuristic,
+  not a confidence interval or significance test.
 - R² describes the sampled range only. Expand the size range, inspect candidate
   scores, and consider deterministic operation counts before interpreting growth.
   Instrumentation adds overhead. Repeated runs reduce some noise but do not remove
@@ -86,13 +83,12 @@ direct fits raise `InconclusiveFitError`, a `RuntimeError` subclass.
 python examples/controlled_growth.py
 ```
 
-This writes `controlled-growth.png` and `controlled-growth.json` from literal linear
-measurements, so the example demonstrates fitting and plotting without claiming
-that wall-clock measurements establish a particular asymptotic class.
+This writes `controlled-growth.png` and `controlled-growth.json` from synthetic
+linear measurements, giving a repeatable example of fitting and plotting.
 
 ![Controlled synthetic linear measurements](docs/assets/controlled-growth.png)
 
-## Contribute and verify
+## Development
 
 ```bash
 python -m pip install -r requirements-dev.txt
@@ -107,17 +103,16 @@ python -m build
 ```
 
 Alternatively, `uv sync --extra dev` installs the locked development environment;
-run checks with `uv run`. CI checks formatting, types, security, tests and the
-85% coverage gate on its configured OS/Python matrix. Local verification is not
-proof that every matrix combination passes; see the workflow results for hosted
-status. Bandit's per-call B311 annotations identify non-security random algorithm
-pivots and synthetic data generation; other security checks remain enabled.
+run checks with `uv run`. CI checks formatting, types, security and an 85% coverage
+threshold across Linux, macOS and Windows with Python 3.10–3.12. Bandit's B311
+annotations cover pseudorandom input generation and algorithm pivots.
 
 Bug reports should include Python/package versions, OS, input sizes, timing units,
 raw data and candidate scores. For fitting changes, add deterministic regressions
 with independently derived expected results across timing scales. Keep real timing
-smoke tests separate from model correctness tests, and do not assert exact classes
-from a short wall-clock run. Include regression evidence and run the full checks.
+smoke tests separate from model correctness tests. See the
+[contribution guide](docs/CONTRIBUTING.md) and [test guide](tests/README.md).
 
 MIT licensed; see [LICENSE](LICENSE). See [CHANGELOG.md](CHANGELOG.md) for release
-notes and [docs/EXPORT_README.md](docs/EXPORT_README.md) for export details.
+notes and the [documentation index](docs/README.md) for examples, architecture and
+export details.

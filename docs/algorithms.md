@@ -1,338 +1,73 @@
-# Algorithm Reference
+# Algorithms
 
-Reference for all implemented algorithms.
+The CLI includes six sorting and four searching algorithms. BFS, DFS and
+Dijkstra's algorithm are available through the Python API. Each implementation
+records operations through a supplied metrics collector.
 
-## Sorting Algorithms
+## Sorting
 
-### Merge Sort
+| CLI name | Approach | Usual time bound |
+| --- | --- | --- |
+| `merge_sort` | Split, recursively sort and merge. | O(n log n) |
+| `quick_sort` | Random pivot with less/equal/greater partitions. | O(n log n) average; O(n²) worst |
+| `heap_sort` | Build a max heap and remove its largest element repeatedly. | O(n log n) |
+| `insertion_sort` | Insert each value into the sorted prefix. | O(n²) average/worst; O(n) on sorted input |
+| `bubble_sort` | Swap adjacent values, stopping when a pass makes no swaps. | O(n²) average/worst; O(n) on sorted input |
+| `selection_sort` | Select the next minimum from the unsorted suffix. | O(n²) |
 
-**Complexity**: O(n log n) - all cases
-**Space**: O(n)
-**Stable**: Yes
-**In-place**: No
+These are theoretical reference bounds. Measured timings also include Python
+and instrumentation overhead. All public sorting `execute` methods copy their
+input. Heap, insertion, bubble and selection sort then modify that working copy;
+merge and quick sort allocate additional lists. An algorithm's in-place metadata
+therefore describes its working procedure, not a promise to mutate the caller's
+list or use constant total memory through this API.
 
-Divide-and-conquer algorithm that recursively splits the array, sorts the halves, and merges them. Guarantees O(n log n) regardless of input.
-
-**When to use**:
-- Need guaranteed O(n log n) performance
-- Stability is required
-- Working with linked lists
-- External sorting (large datasets)
-
-**Usage**:
 ```bash
-complexity-profiler analyze merge_sort --sizes 100,1000,10000
+complexity-profiler compare merge_sort quick_sort heap_sort --sizes 100,500,1000,5000 --runs 10 --save-chart sorting.png
 ```
 
----
+## Searching
 
-### Quick Sort
+| CLI name | Input requirement | Usual time bound |
+| --- | --- | --- |
+| `linear_search` | Any list. | O(n) worst |
+| `binary_search` | Sorted list. | O(log n) worst |
+| `jump_search` | Sorted list. | O(√n) worst |
+| `interpolation_search` | Sorted numeric list; uniform spacing helps. | O(log log n) average for uniform data; O(n) worst |
 
-**Complexity**: O(n log n) average, O(n�) worst
-**Space**: O(log n) to O(n)
-**Stable**: No
-**In-place**: No (this implementation)
+The input format is `[target, *search_space]`. The result is a one-element list
+containing the matching index in `search_space`, or `-1`. See
+[custom experiments](examples/advanced_analysis.md#search-inputs) for a small
+Python example and guidance on target selection. The CLI's generic data generator
+does not define an average-case search experiment.
 
-Picks a pivot and partitions the array into elements less than, equal to, and greater than the pivot. Uses random pivot selection to avoid worst-case behavior on sorted data.
+## Graphs
 
-**When to use**:
-- Average-case performance is prioritized
-- In-memory sorting with good cache locality
-- Don't need stability
+`Graph` stores an adjacency list and supports directed and weighted edges.
+`BFS`, `DFS` and `DijkstraShortestPath` accept a list containing one `Graph`.
+Their public `execute` methods choose a starting vertex from the graph's vertex
+set. BFS and DFS return traversal order; Dijkstra returns vertex/distance pairs
+and requires nonnegative weights. A set's iteration order should not be used to
+choose a particular source for an experiment.
 
-**Usage**:
-```bash
-complexity-profiler analyze quick_sort --data-type random
+```python
+from complexity_profiler.algorithms.graph import BFS
+from complexity_profiler.analysis.metrics import DefaultMetricsCollector
+from complexity_profiler.data.graph_generators import linear_graph
+
+graph = linear_graph(vertices=5)
+collector = DefaultMetricsCollector()
+visited = BFS().execute([graph], collector)
+print(visited)
+print(graph.get_vertex_count(), graph.get_edge_count())  # 5, 4
 ```
 
----
-
-### Heap Sort
-
-**Complexity**: O(n log n) - all cases
-**Space**: O(1)
-**Stable**: No
-**In-place**: Yes
-
-Builds a max heap and repeatedly extracts the maximum element. Gets you guaranteed O(n log n) with O(1) space.
-
-**When to use**:
-- Need O(n log n) with minimal memory
-- Guaranteed performance important
-- Stability not required
-
-**Usage**:
-```bash
-complexity-profiler analyze heap_sort --sizes 1000,5000,10000
-```
-
----
-
-### Insertion Sort
-
-**Complexity**: O(n�) worst/average, O(n) best
-**Space**: O(1)
-**Stable**: Yes
-**In-place**: Yes
-
-Builds the sorted array one element at a time by inserting each element into its correct position. Works well on small or nearly-sorted arrays.
-
-**When to use**:
-- Small datasets (< 50 elements)
-- Nearly sorted data
-- Online sorting (processing stream)
-- As part of hybrid algorithms (TimSort)
-
-**Usage**:
-```bash
-complexity-profiler analyze insertion_sort --data-type nearly_sorted
-```
-
----
-
-### Bubble Sort
-
-**Complexity**: O(n�) worst/average, O(n) best
-**Space**: O(1)
-**Stable**: Yes
-**In-place**: Yes
-
-Steps through the list, compares adjacent elements, and swaps them if needed. Includes early termination when no swaps occur.
-
-**When to use**:
-- Educational purposes
-- Very small datasets
-- Need simple, stable sorting
-- Already mostly sorted data
-
-**Usage**:
-```bash
-complexity-profiler analyze bubble_sort --sizes 100,500,1000
-```
-
----
-
-### Selection Sort
-
-**Complexity**: O(n�) - all cases
-**Space**: O(1)
-**Stable**: No
-**In-place**: Yes
-
-Finds the minimum element from the unsorted portion and puts it at the beginning. Minimizes the number of swaps.
-
-**When to use**:
-- Minimize number of swaps (expensive writes)
-- Simple implementation needed
-- Memory is extremely limited
-
-**Usage**:
-```bash
-complexity-profiler analyze selection_sort
-```
-
----
-
-## Searching Algorithms
-
-### Binary Search
-
-**Complexity**: O(log n)
-**Space**: O(1)
-**Requirements**: Sorted array
-
-Divides the search space in half by comparing the target with the middle element. Requires sorted data.
-
-**When to use**:
-- Searching in sorted data
-- Large datasets
-- Need logarithmic performance
-
-**Usage**:
-```bash
-complexity-profiler analyze binary_search --data-type sorted
-```
-
----
-
-### Linear Search
-
-**Complexity**: O(n)
-**Space**: O(1)
-**Requirements**: None
-
-**Description**: Sequentially checks each element until target is found or end is reached.
-
-**When to use**:
-- Unsorted data
-- Small datasets
-- Simple implementation needed
-- Single search operation
-
-**Usage**:
-```bash
-complexity-profiler analyze linear_search
-```
-
----
-
-### Jump Search
-
-**Complexity**: O(n)
-**Space**: O(1)
-**Requirements**: Sorted array
-
-Jumps ahead by fixed steps, then does linear search in the identified block. Faster than linear search, simpler than binary.
-
-**When to use**:
-- Sorted data
-- System where jumping back is costly
-- Simpler than binary search
-
-**Usage**:
-```bash
-complexity-profiler analyze jump_search --data-type sorted
-```
-
----
-
-### Interpolation Search
-
-**Complexity**: O(log log n) average, O(n) worst
-**Space**: O(1)
-**Requirements**: Sorted array with uniform distribution
-
-Better than binary search for uniformly distributed data. Uses value-based position estimation instead of always picking the middle.
-
-**When to use**:
-- Uniformly distributed sorted data
-- Need faster than O(log n)
-- Data allows value interpolation
-
-**Usage**:
-```bash
-complexity-profiler analyze interpolation_search --data-type sorted
-```
-
----
-
-## Graph Algorithms
-
-### Breadth-First Search (BFS)
-
-**Complexity**: O(V + E) where V = vertices, E = edges
-**Space**: O(V)
-
-Explores the graph level by level using a queue. Finds the shortest path in unweighted graphs.
-
-**When to use**:
-- Shortest path in unweighted graph
-- Level-order traversal
-- Finding connected components
-
----
-
-### Depth-First Search (DFS)
-
-**Complexity**: O(V + E)
-**Space**: O(V)
-
-Goes as deep as possible before backtracking. Can use recursion or an explicit stack.
-
-**When to use**:
-- Topological sorting
-- Cycle detection
-- Path finding
-- Maze solving
-
----
-
-### Dijkstra's Shortest Path
-
-**Complexity**: O((V + E) log V) with binary heap
-**Space**: O(V)
-
-Finds shortest paths from a source to all vertices in a weighted graph. Requires non-negative edge weights.
-
-**When to use**:
-- Weighted graphs
-- Single-source shortest path
-- Non-negative edge weights
-- GPS navigation, network routing
-
----
-
-## Comparison Tables
-
-### Sorting Algorithms Comparison
-
-| Algorithm | Time (Best) | Time (Avg) | Time (Worst) | Space | Stable | In-place |
-|-----------|-------------|------------|--------------|-------|--------|----------|
-| Merge Sort | O(n log n) | O(n log n) | O(n log n) | O(n) | Yes | No |
-| Quick Sort | O(n log n) | O(n log n) | O(n�) | O(log n) | No | No* |
-| Heap Sort | O(n log n) | O(n log n) | O(n log n) | O(1) | No | Yes |
-| Insertion Sort | O(n) | O(n�) | O(n�) | O(1) | Yes | Yes |
-| Bubble Sort | O(n) | O(n�) | O(n�) | O(1) | Yes | Yes |
-| Selection Sort | O(n�) | O(n�) | O(n�) | O(1) | No | Yes |
-
-### Searching Algorithms Comparison
-
-| Algorithm | Time (Best) | Time (Avg) | Time (Worst) | Space | Requirements |
-|-----------|-------------|------------|--------------|-------|--------------|
-| Binary Search | O(1) | O(log n) | O(log n) | O(1) | Sorted |
-| Linear Search | O(1) | O(n) | O(n) | O(1) | None |
-| Jump Search | O(1) | O(n) | O(n) | O(1) | Sorted |
-| Interpolation | O(1) | O(log log n) | O(n) | O(1) | Sorted, uniform |
-
----
-
-## Algorithm Selection Guide
-
-### For Sorting:
-
-- Need guaranteed O(n log n)? Use Merge Sort or Heap Sort
-- Limited memory? Use Heap Sort
-- Need stability? Use Merge Sort, Insertion Sort, or Bubble Sort
-- Small dataset (< 50 elements)? Use Insertion Sort
-- General purpose? Use Quick Sort (average case) or Merge Sort
-- Nearly sorted data? Use Insertion Sort or Bubble Sort
-
-### For Searching:
-
-- Sorted data? Use Binary Search
-- Unsorted data? Use Linear Search
-- Sorted + uniform distribution? Use Interpolation Search
-- Sorted + simpler than binary? Use Jump Search
-
----
-
-## Running Comparisons
-
-Compare multiple algorithms:
-```bash
-# Compare sorting algorithms
-complexity-profiler compare merge_sort quick_sort heap_sort \
-  --sizes 100,1000,10000 \
-  --runs 20
-
-# Compare searching algorithms
-complexity-profiler compare binary_search linear_search jump_search \
-  --data-type sorted
-```
-
-Export results:
-```bash
-complexity-profiler analyze merge_sort \
-  --export json \
-  --output merge_sort_results.json
-```
-
-Visualize:
-```bash
-complexity-profiler analyze quick_sort \
-  --save-chart quick_sort_analysis.png
-```
-
----
-
-For implementation details, see the source code in `complexity-profiler/algorithms/`.
+Generators in `complexity_profiler.data.graph_generators` include `random_graph`,
+`complete_graph`, `tree_graph`, `linear_graph` and `cyclic_graph`. They accept a
+vertex count; random and tree generation also support a seed. A five-vertex
+undirected complete graph has 10 edges, a tree or path has four, and a cycle
+has five. See their function signatures for direction and weight options.
+
+The graph implementations and tests are in
+[`graph.py`](../complexity_profiler/algorithms/graph.py) and
+[`test_phase4.py`](../tests/test_phase4.py).
