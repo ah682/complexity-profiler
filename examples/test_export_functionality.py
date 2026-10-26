@@ -11,15 +11,15 @@ from datetime import datetime
 from pathlib import Path
 from typing import List
 
-from complexity_profiler.analysis.profiler import ProfileResult
 from complexity_profiler.analysis.metrics import PerformanceMetrics
+from complexity_profiler.analysis.profiler import ProfileResult
 from complexity_profiler.analysis.statistics import Statistics, compute_statistics
 from complexity_profiler.export import (
-    export_to_json,
-    load_from_json,
-    export_to_csv,
     export_metrics_summary_csv,
+    export_to_csv,
+    export_to_json,
     load_from_csv,
+    load_from_json,
 )
 from complexity_profiler.utils.exceptions import ExportError
 
@@ -42,7 +42,7 @@ def create_test_profile_result(
     Returns:
         Complete ProfileResult object
     """
-    input_sizes = [100 * (2 ** i) for i in range(num_sizes)]
+    input_sizes = [100 * (2**i) for i in range(num_sizes)]
 
     metrics_per_size = {}
     statistics_per_size = {}
@@ -105,11 +105,11 @@ def test_json_export(output_dir: Path) -> bool:
 
         # Verify JSON structure
         print("Verifying JSON structure...", end=" ")
-        with open(json_file, 'r') as f:
+        with open(json_file, "r") as f:
             data = json.load(f)
-        assert data['algorithm_name'] == "QuickSort"
-        assert data['empirical_complexity'] == "O(n log n)"
-        assert len(data['input_sizes']) == 3
+        assert data["algorithm_name"] == "QuickSort"
+        assert data["empirical_complexity"] == "O(n log n)"
+        assert len(data["input_sizes"]) == 3
         print("PASS")
 
         # Test compact export
@@ -195,11 +195,11 @@ def test_csv_export(output_dir: Path) -> bool:
 
         # Verify CSV structure
         print("Verifying CSV structure...", end=" ")
-        with open(csv_file, 'r') as f:
+        with open(csv_file, "r") as f:
             header = f.readline().strip()
-        assert 'input_size' in header
-        assert 'algorithm' in header
-        assert 'mean_execution_time' in header
+        assert "input_size" in header
+        assert "algorithm" in header
+        assert "mean_execution_time" in header
         print("PASS")
 
         # Test summary export
@@ -244,7 +244,7 @@ def test_csv_load(output_dir: Path) -> bool:
         # Verify data
         print("Verifying CSV data...", end=" ")
         assert len(df) == len(original.input_sizes)
-        assert list(df['input_size'].values) == original.input_sizes
+        assert list(df["input_size"].values) == original.input_sizes
         print("PASS")
 
         return True
@@ -339,14 +339,14 @@ def test_data_types(output_dir: Path) -> bool:
 
         # Verify types in JSON
         print("Verifying JSON type conversion...", end=" ")
-        with open(json_file, 'r') as f:
+        with open(json_file, "r") as f:
             data = json.load(f)
 
         # Check that numpy types were converted
-        assert isinstance(data['r_squared'], float)
-        assert isinstance(data['empirical_complexity'], str)
-        assert isinstance(data['timestamp'], str)
-        assert isinstance(data['input_sizes'], list)
+        assert isinstance(data["r_squared"], float)
+        assert isinstance(data["empirical_complexity"], str)
+        assert isinstance(data["timestamp"], str)
+        assert isinstance(data["input_sizes"], list)
         print("PASS")
 
         return True
@@ -377,16 +377,16 @@ def test_profile_result_methods(output_dir: Path) -> bool:
         print("Testing to_dict()...", end=" ")
         data = result.to_dict()
         assert isinstance(data, dict)
-        assert 'algorithm_name' in data
-        assert 'metrics_per_size' in data
+        assert "algorithm_name" in data
+        assert "metrics_per_size" in data
         print("PASS")
 
         # Test get_summary
         print("Testing get_summary()...", end=" ")
         summary = result.get_summary()
-        assert summary['algorithm_name'] == result.algorithm_name
-        assert summary['empirical_complexity'] == result.empirical_complexity
-        assert summary['r_squared'] == result.r_squared
+        assert summary["algorithm_name"] == result.algorithm_name
+        assert summary["empirical_complexity"] == result.empirical_complexity
+        assert summary["r_squared"] == result.r_squared
         print("PASS")
 
         # Test statistics methods

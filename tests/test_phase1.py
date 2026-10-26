@@ -18,14 +18,26 @@ print("=" * 70)
 print("\n1. Testing imports...")
 try:
     from complexity_profiler.utils.exceptions import (
-        BigOComplexityError,
         AlgorithmError,
+        BigOComplexityError,
+        ConfigurationError,
+        CurveFittingError,
+        DataGenerationError,
+        ExportError,
+        ProfilingError,
+    )
+
+    for error_type in (
         DataGenerationError,
         ProfilingError,
         CurveFittingError,
         ConfigurationError,
         ExportError,
-    )
+    ):
+        try:
+            raise error_type("import and hierarchy check")
+        except BigOComplexityError as error:
+            assert error.message == "import and hierarchy check"
     print("   ✓ exceptions module imported successfully")
 except Exception as e:
     print(f"   ✗ Failed to import exceptions: {e}")
@@ -33,10 +45,11 @@ except Exception as e:
 
 try:
     from complexity_profiler.utils.logging_config import (
-        setup_logging,
         get_logger,
         set_module_level,
+        setup_logging,
     )
+
     print("   ✓ logging_config module imported successfully")
 except Exception as e:
     print(f"   ✗ Failed to import logging_config: {e}")
@@ -44,12 +57,13 @@ except Exception as e:
 
 try:
     from complexity_profiler.analysis.metrics import (
-        PerformanceMetrics,
-        DefaultMetricsCollector,
-        ThreadSafeMetricsCollector,
         AggregateMetricsCollector,
+        DefaultMetricsCollector,
+        PerformanceMetrics,
+        ThreadSafeMetricsCollector,
         measure_time,
     )
+
     print("   ✓ metrics module imported successfully")
 except Exception as e:
     print(f"   ✗ Failed to import metrics: {e}")
@@ -118,6 +132,7 @@ try:
 except Exception as e:
     print(f"   ✗ Metrics tests failed: {e}")
     import traceback
+
     traceback.print_exc()
     sys.exit(1)
 
@@ -144,15 +159,19 @@ except Exception as e:
 # Test 6: Test protocol compliance
 print("\n6. Testing MetricsCollector protocol compliance...")
 try:
-    from complexity_profiler.algorithms.base import MetricsCollector
-
     # Test that both collectors implement the protocol
     default_collector = DefaultMetricsCollector()
     thread_safe_collector = ThreadSafeMetricsCollector()
 
     # Both should have all required protocol methods
-    for method in ['record_comparison', 'record_swap', 'record_access',
-                   'record_recursive_call', 'get_metrics', 'reset']:
+    for method in [
+        "record_comparison",
+        "record_swap",
+        "record_access",
+        "record_recursive_call",
+        "get_metrics",
+        "reset",
+    ]:
         assert hasattr(default_collector, method)
         assert hasattr(thread_safe_collector, method)
 
@@ -173,8 +192,8 @@ try:
         aggregate.add_metrics(collector.get_metrics())
 
     summary = aggregate.get_summary()
-    assert summary['runs'] == 3
-    assert summary['mean_comparisons'] == 2.0  # (1 + 2 + 3) / 3
+    assert summary["runs"] == 3
+    assert summary["mean_comparisons"] == 2.0  # (1 + 2 + 3) / 3
 
     print("   ✓ Aggregate collector working correctly")
 except Exception as e:

@@ -1,3 +1,5 @@
+# B311 annotations below are for synthetic inputs or algorithm pivots,
+# where reproducible pseudorandomness is intentional; no security use.
 """
 Algorithm profiling and performance analysis tools.
 
@@ -6,20 +8,17 @@ metrics across multiple runs with different input sizes, and analyzing the
 results to determine empirical Big-O complexity.
 """
 
-from dataclasses import dataclass, field, asdict
-from datetime import datetime
-from typing import Optional, Callable, List, Dict, Any
 import copy
+from dataclasses import asdict, dataclass, field
+from datetime import datetime
+from typing import Any, Callable, Optional
+
 import numpy as np
 
-import sys
-import os
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
-
-from complexity_profiler.algorithms.base import ComplexityClass, Algorithm
-from complexity_profiler.analysis.metrics import PerformanceMetrics, DefaultMetricsCollector
+from complexity_profiler.algorithms.base import Algorithm
+from complexity_profiler.analysis.curve_fitting import ComplexityFitter, InconclusiveFitError
+from complexity_profiler.analysis.metrics import DefaultMetricsCollector, PerformanceMetrics
 from complexity_profiler.analysis.statistics import Statistics, compute_statistics
-from complexity_profiler.analysis.curve_fitting import ComplexityFitter
 
 
 @dataclass
@@ -36,10 +35,11 @@ class ProfileResult:
         input_sizes: List of input sizes used in profiling
         metrics_per_size: Dictionary mapping input size to collected metrics
         statistics_per_size: Dictionary mapping input size to statistics
-        empirical_complexity: Detected Big-O complexity class (e.g., "O(n)")
+        empirical_complexity: Candidate growth class or "Inconclusive"
         r_squared: R-squared value of the fitted curve (0.0 to 1.0)
         timestamp: When the profiling was performed
-        notes: Optional notes about the profiling session
+        notes: Optional notes or the reason a fit is inconclusive
+        candidate_scores: R² for each supported candidate growth curve
     """
 
     algorithm_name: str
@@ -51,6 +51,7 @@ class ProfileResult:
     r_squared: float
     timestamp: datetime = field(default_factory=datetime.now)
     notes: Optional[str] = None
+    candidate_scores: dict[str, float] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
         """Validate the profile result after initialization."""
@@ -74,20 +75,20 @@ class ProfileResult:
         result = asdict(self)
 
         # Convert timestamp to ISO format string
-        if isinstance(result['timestamp'], datetime):
-            result['timestamp'] = result['timestamp'].isoformat()
+        if isinstance(result["timestamp"], datetime):
+            result["timestamp"] = result["timestamp"].isoformat()
 
         # Convert metrics to dictionaries
         metrics_dict = {}
         for size, metrics_list in self.metrics_per_size.items():
             metrics_dict[str(size)] = [asdict(m) for m in metrics_list]
-        result['metrics_per_size'] = metrics_dict
+        result["metrics_per_size"] = metrics_dict
 
         # Convert statistics to dictionaries
         stats_dict = {}
         for size, stats in self.statistics_per_size.items():
             stats_dict[str(size)] = asdict(stats)
-        result['statistics_per_size'] = stats_dict
+        result["statistics_per_size"] = stats_dict
 
         return result
 
@@ -102,13 +103,13 @@ class ProfileResult:
             Dictionary with summary information
         """
         return {
-            'algorithm_name': self.algorithm_name,
-            'category': self.category,
-            'input_sizes': self.input_sizes,
-            'empirical_complexity': self.empirical_complexity,
-            'r_squared': self.r_squared,
-            'timestamp': self.timestamp.isoformat(),
-            'notes': self.notes,
+            "algorithm_name": self.algorithm_name,
+            "category": self.category,
+            "input_sizes": self.input_sizes,
+            "empirical_complexity": self.empirical_complexity,
+            "r_squared": self.r_squared,
+            "timestamp": self.timestamp.isoformat(),
+            "notes": self.notes,
         }
 
 
@@ -148,7 +149,7 @@ class AlgorithmProfiler:
         self._warmup_runs = warmup_runs
         self._min_r_squared = min_r_squared
 
-    def with_sizes(self, sizes: list[int]) -> 'AlgorithmProfiler':
+    def with_sizes(self, sizes: list[int]) -> "AlgorithmProfiler":
         """
         Set the input sizes to test.
 
@@ -169,7 +170,7 @@ class AlgorithmProfiler:
         self._input_sizes = sorted(sizes)
         return self
 
-    def with_runs(self, runs: int) -> 'AlgorithmProfiler':
+    def with_runs(self, runs: int) -> "AlgorithmProfiler":
         """
         Set the number of runs per input size.
 
@@ -188,10 +189,7 @@ class AlgorithmProfiler:
         self._runs_per_size = runs
         return self
 
-    def with_data_generator(
-        self,
-        generator: Callable[[int], list[Any]]
-    ) -> 'AlgorithmProfiler':
+    def with_data_generator(self, generator: Callable[[int], list[Any]]) -> "AlgorithmProfiler":
         """
         Set the data generator function.
 
@@ -242,12 +240,18 @@ class AlgorithmProfiler:
         # Fit complexity curve
         sizes_arr = np.array(self._input_sizes, dtype=np.float64)
         mean_times = np.array(
-            [statistics_by_size[size].mean for size in self._input_sizes],
-            dtype=np.float64
+            [statistics_by_size[size].mean for size in self._input_sizes], dtype=np.float64
         )
 
         fitter = ComplexityFitter(min_r_squared=self._min_r_squared)
-        fitted_complexity, fit_quality = fitter.fit_complexity(sizes_arr, mean_times)
+        notes = None
+        try:
+            fitted_complexity, fit_quality = fitter.fit_complexity(sizes_arr, mean_times)
+            empirical_complexity = str(fitted_complexity)
+        except InconclusiveFitError as exc:
+            empirical_complexity = "Inconclusive"
+            fit_quality = max(exc.candidate_scores.values())
+            notes = str(exc)
 
         return ProfileResult(
             algorithm_name=algorithm.metadata.name,
@@ -255,7 +259,9 @@ class AlgorithmProfiler:
             input_sizes=self._input_sizes,
             metrics_per_size=metrics_by_size,
             statistics_per_size=statistics_by_size,
-            empirical_complexity=str(fitted_complexity),
+            empirical_complexity=empirical_complexity,
+            notes=notes,
+            candidate_scores={str(cls): score for cls, score in fitter.candidate_scores.items()},
             r_squared=fit_quality,
         )
 
@@ -334,14 +340,17 @@ def profile_algorithm(
     if data_generator is None:
         # Default generator: random integers
         import random
-        data_generator = lambda n: [random.randint(0, 1000) for _ in range(n)]
+
+        def data_generator(n: int) -> list[Any]:
+            return [random.randint(0, 1000) for _ in range(n)]  # nosec B311
 
     profiler = AlgorithmProfiler()
-    return (profiler
-            .with_sizes(sizes)
-            .with_runs(runs)
-            .with_data_generator(data_generator)
-            .profile(algorithm))
+    return (
+        profiler.with_sizes(sizes)
+        .with_runs(runs)
+        .with_data_generator(data_generator)
+        .profile(algorithm)
+    )
 
 
 __all__ = [

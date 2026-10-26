@@ -14,17 +14,17 @@ Available Algorithms:
 Note: Search algorithms expect the target value as the first element of the data list.
 """
 
-from typing import TypeVar, Generic
 import math
+from typing import Generic, SupportsFloat, TypeVar, cast
+
 from complexity_profiler.algorithms.base import (
     AlgorithmMetadata,
+    Comparable,
     ComplexityClass,
     MetricsCollector,
-    Comparable,
 )
 
-
-T = TypeVar('T', bound=Comparable)
+T = TypeVar("T", bound=Comparable)
 
 
 class LinearSearch(Generic[T]):
@@ -72,7 +72,7 @@ class LinearSearch(Generic[T]):
             ),
         )
 
-    def execute(self, data: list[T], collector: MetricsCollector) -> list[T]:
+    def execute(self, data: list[T], collector: MetricsCollector) -> list[int]:
         """
         Perform linear search on the data.
 
@@ -96,9 +96,7 @@ class LinearSearch(Generic[T]):
         index = self._linear_search(search_space, target, collector)
         return [index]
 
-    def _linear_search(
-        self, arr: list[T], target: T, collector: MetricsCollector
-    ) -> int:
+    def _linear_search(self, arr: list[T], target: T, collector: MetricsCollector) -> int:
         """
         Internal linear search implementation.
 
@@ -165,7 +163,7 @@ class BinarySearch(Generic[T]):
             ),
         )
 
-    def execute(self, data: list[T], collector: MetricsCollector) -> list[T]:
+    def execute(self, data: list[T], collector: MetricsCollector) -> list[int]:
         """
         Perform binary search on sorted data.
 
@@ -189,9 +187,7 @@ class BinarySearch(Generic[T]):
         index = self._binary_search(search_space, target, collector)
         return [index]
 
-    def _binary_search(
-        self, arr: list[T], target: T, collector: MetricsCollector
-    ) -> int:
+    def _binary_search(self, arr: list[T], target: T, collector: MetricsCollector) -> int:
         """
         Internal iterative binary search implementation.
 
@@ -270,7 +266,7 @@ class JumpSearch(Generic[T]):
             ),
         )
 
-    def execute(self, data: list[T], collector: MetricsCollector) -> list[T]:
+    def execute(self, data: list[T], collector: MetricsCollector) -> list[int]:
         """
         Perform jump search on sorted data.
 
@@ -294,9 +290,7 @@ class JumpSearch(Generic[T]):
         index = self._jump_search(search_space, target, collector)
         return [index]
 
-    def _jump_search(
-        self, arr: list[T], target: T, collector: MetricsCollector
-    ) -> int:
+    def _jump_search(self, arr: list[T], target: T, collector: MetricsCollector) -> int:
         """
         Internal jump search implementation.
 
@@ -392,7 +386,7 @@ class InterpolationSearch(Generic[T]):
             ),
         )
 
-    def execute(self, data: list[T], collector: MetricsCollector) -> list[T]:
+    def execute(self, data: list[T], collector: MetricsCollector) -> list[int]:
         """
         Perform interpolation search on sorted uniformly distributed data.
 
@@ -417,9 +411,7 @@ class InterpolationSearch(Generic[T]):
         index = self._interpolation_search(search_space, target, collector)
         return [index]
 
-    def _interpolation_search(
-        self, arr: list[T], target: T, collector: MetricsCollector
-    ) -> int:
+    def _interpolation_search(self, arr: list[T], target: T, collector: MetricsCollector) -> int:
         """
         Internal interpolation search implementation.
 
@@ -461,8 +453,9 @@ class InterpolationSearch(Generic[T]):
             try:
                 # Try numeric interpolation (works for int, float)
                 pos = low + int(
-                    (high - low) * (float(target) - float(arr[low])) /
-                    (float(arr[high]) - float(arr[low]))
+                    (high - low)
+                    * (float(cast(SupportsFloat, target)) - float(cast(SupportsFloat, arr[low])))
+                    / (float(cast(SupportsFloat, arr[high])) - float(cast(SupportsFloat, arr[low])))
                 )
                 # Ensure pos is within bounds
                 pos = max(low, min(high, pos))

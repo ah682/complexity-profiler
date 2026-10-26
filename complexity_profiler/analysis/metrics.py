@@ -7,11 +7,11 @@ memory usage tracking. It implements the MetricsCollector protocol defined in
 algorithms.base and provides both simple and thread-safe collector implementations.
 """
 
-from dataclasses import dataclass, field, asdict
-from typing import Dict, Any, Optional, Iterator
-from contextlib import contextmanager
-import time
 import threading
+import time
+from contextlib import contextmanager
+from dataclasses import asdict, dataclass, field
+from typing import Any, Dict, Iterator, Optional
 
 
 @dataclass
@@ -50,11 +50,11 @@ class PerformanceMetrics:
             Sum of all operation counts (excluding execution time)
         """
         return (
-            self.comparisons +
-            self.swaps +
-            self.accesses +
-            self.recursive_calls +
-            self.memory_operations
+            self.comparisons
+            + self.swaps
+            + self.accesses
+            + self.recursive_calls
+            + self.memory_operations
         )
 
     def to_dict(self) -> dict[str, Any]:
@@ -510,26 +510,28 @@ class AggregateMetricsCollector:
         """
         if not self._all_metrics:
             return {
-                'runs': 0,
-                'mean_comparisons': 0.0,
-                'mean_swaps': 0.0,
-                'mean_accesses': 0.0,
-                'mean_recursive_calls': 0.0,
-                'mean_execution_time': 0.0,
-                'mean_total_operations': 0.0,
-                'mean_memory_operations': 0.0,
+                "runs": 0,
+                "mean_comparisons": 0.0,
+                "mean_swaps": 0.0,
+                "mean_accesses": 0.0,
+                "mean_recursive_calls": 0.0,
+                "mean_execution_time": 0.0,
+                "mean_total_operations": 0.0,
+                "mean_memory_operations": 0.0,
             }
 
         num_runs = len(self._all_metrics)
         return {
-            'runs': num_runs,
-            'mean_comparisons': sum(m.comparisons for m in self._all_metrics) / num_runs,
-            'mean_swaps': sum(m.swaps for m in self._all_metrics) / num_runs,
-            'mean_accesses': sum(m.accesses for m in self._all_metrics) / num_runs,
-            'mean_recursive_calls': sum(m.recursive_calls for m in self._all_metrics) / num_runs,
-            'mean_execution_time': sum(m.execution_time for m in self._all_metrics) / num_runs,
-            'mean_total_operations': sum(m.total_operations() for m in self._all_metrics) / num_runs,
-            'mean_memory_operations': sum(m.memory_operations for m in self._all_metrics) / num_runs,
+            "runs": num_runs,
+            "mean_comparisons": sum(m.comparisons for m in self._all_metrics) / num_runs,
+            "mean_swaps": sum(m.swaps for m in self._all_metrics) / num_runs,
+            "mean_accesses": sum(m.accesses for m in self._all_metrics) / num_runs,
+            "mean_recursive_calls": sum(m.recursive_calls for m in self._all_metrics) / num_runs,
+            "mean_execution_time": sum(m.execution_time for m in self._all_metrics) / num_runs,
+            "mean_total_operations": sum(m.total_operations() for m in self._all_metrics)
+            / num_runs,
+            "mean_memory_operations": sum(m.memory_operations for m in self._all_metrics)
+            / num_runs,
         }
 
     def reset(self) -> None:

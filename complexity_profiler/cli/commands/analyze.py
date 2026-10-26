@@ -5,27 +5,28 @@ This module implements the 'analyze' CLI command which profiles a single
 algorithm and displays or exports the results.
 """
 
-from typing import Optional, List
 from pathlib import Path
+from typing import List, Optional
+
 import click
 from rich.console import Console
-from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TimeRemainingColumn
+from rich.progress import BarColumn, Progress, SpinnerColumn, TextColumn, TimeRemainingColumn
 
-from complexity_profiler.analysis.profiler import AlgorithmProfiler
-from complexity_profiler.visualization.formatters import ResultFormatter
-from complexity_profiler.visualization.charts import ChartGenerator
+from complexity_profiler.analysis.profiler import AlgorithmProfiler, ProfileResult
 from complexity_profiler.cli.validators import (
+    VALID_METRICS,
+    create_data_generator,
+    get_algorithm_instance,
     validate_algorithm_name,
-    validate_input_sizes,
-    validate_runs,
     validate_data_type,
     validate_export_format,
-    validate_output_path,
+    validate_input_sizes,
     validate_metric,
-    get_algorithm_instance,
-    create_data_generator,
-    VALID_METRICS,
+    validate_output_path,
+    validate_runs,
 )
+from complexity_profiler.visualization.charts import ChartGenerator
+from complexity_profiler.visualization.formatters import ResultFormatter
 
 
 @click.command(name="analyze")
@@ -191,17 +192,11 @@ def analyze(
             console=console,
             disable=quiet,
         ) as progress:
-            task = progress.add_task(
-                f"Profiling {algorithm}...",
-                total=len(sizes) * runs
-            )
+            task = progress.add_task(f"Profiling {algorithm}...", total=len(sizes) * runs)
 
             # Create profiler
             profiler = AlgorithmProfiler()
-            profiler = (profiler
-                       .with_sizes(sizes)
-                       .with_runs(runs)
-                       .with_data_generator(data_gen))
+            profiler = profiler.with_sizes(sizes).with_runs(runs).with_data_generator(data_gen)
 
             # Profile with progress updates
             result = profiler.profile(algo_instance)
@@ -230,14 +225,7 @@ def analyze(
     # Generate visualization if requested
     if visualize:
         try:
-            _generate_visualization(
-                result,
-                visualize,
-                metric,
-                log_scale,
-                formatter,
-                quiet
-            )
+            _generate_visualization(result, visualize, metric, log_scale, formatter, quiet)
         except Exception as e:
             formatter.print_error(f"Visualization failed: {e}")
             raise click.Abort()
@@ -247,7 +235,7 @@ def analyze(
 
 
 def _export_results(
-    result,
+    result: ProfileResult,
     format: str,
     output_path: Path,
     formatter: ResultFormatter,
@@ -263,9 +251,8 @@ def _export_results(
         formatter: ResultFormatter for console output
         quiet: Whether to suppress output
     """
-    import json
     import csv
-    from datetime import datetime
+    import json
 
     if format == "json":
         # Export as JSON
@@ -279,16 +266,18 @@ def _export_results(
             writer = csv.writer(f)
 
             # Write header
-            writer.writerow([
-                "Input Size",
-                "Mean Time (s)",
-                "Std Dev (s)",
-                "Min Time (s)",
-                "Max Time (s)",
-                "Mean Comparisons",
-                "Mean Swaps",
-                "Mean Accesses",
-            ])
+            writer.writerow(
+                [
+                    "Input Size",
+                    "Mean Time (s)",
+                    "Std Dev (s)",
+                    "Min Time (s)",
+                    "Max Time (s)",
+                    "Mean Comparisons",
+                    "Mean Swaps",
+                    "Mean Accesses",
+                ]
+            )
 
             # Write data rows
             for size in result.input_sizes:
@@ -299,16 +288,18 @@ def _export_results(
                 mean_swaps = sum(m.swaps for m in metrics_list) / len(metrics_list)
                 mean_acc = sum(m.accesses for m in metrics_list) / len(metrics_list)
 
-                writer.writerow([
-                    size,
-                    f"{stats.mean:.6f}",
-                    f"{stats.std_dev:.6f}",
-                    f"{stats.min:.6f}",
-                    f"{stats.max:.6f}",
-                    f"{mean_comp:.0f}",
-                    f"{mean_swaps:.0f}",
-                    f"{mean_acc:.0f}",
-                ])
+                writer.writerow(
+                    [
+                        size,
+                        f"{stats.mean:.6f}",
+                        f"{stats.std_dev:.6f}",
+                        f"{stats.min:.6f}",
+                        f"{stats.max:.6f}",
+                        f"{mean_comp:.0f}",
+                        f"{mean_swaps:.0f}",
+                        f"{mean_acc:.0f}",
+                    ]
+                )
 
     elif format == "html":
         # Export as HTML
@@ -321,7 +312,7 @@ def _export_results(
 
 
 def _generate_visualization(
-    result,
+    result: ProfileResult,
     output_path: Path,
     metric: str,
     log_scale: bool,
@@ -357,7 +348,7 @@ def _generate_visualization(
         formatter.print_success(f"Visualization saved to: {output_path}")
 
 
-def _generate_html_report(result) -> str:
+def _generate_html_report(result: ProfileResult) -> str:
     """
     Generate HTML report for profiling results.
 
@@ -425,7 +416,8 @@ def _generate_html_report(result) -> str:
         <h2>Summary</h2>
         <p><strong>Algorithm:</strong> {result.algorithm_name}</p>
         <p><strong>Category:</strong> {result.category}</p>
-        <p><strong>Detected Complexity:</strong> <span class="complexity">{result.empirical_complexity}</span></p>
+        <p><strong>Empirical fit:</strong>
+        <span class="complexity">{result.empirical_complexity}</span></p>
         <p><strong>R² Score:</strong> {result.r_squared:.4f}</p>
         <p><strong>Timestamp:</strong> {result.timestamp.strftime('%Y-%m-%d %H:%M:%S')}</p>
     </div>

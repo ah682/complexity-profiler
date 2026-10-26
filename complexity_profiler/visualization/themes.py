@@ -6,8 +6,7 @@ used throughout the visualization components to ensure consistent, professional
 appearance.
 """
 
-from typing import Dict, List, Any
-
+from typing import Any, Dict, List
 
 # Color palette for charts - carefully selected for visual distinction and accessibility
 COLORS: List[str] = [
@@ -31,7 +30,6 @@ CHART_STYLE: Dict[str, Any] = {
     "figure.dpi": 100,
     "figure.facecolor": "white",
     "figure.edgecolor": "white",
-
     # Axes settings
     "axes.facecolor": "#F8F9FA",
     "axes.edgecolor": "#DEE2E6",
@@ -44,18 +42,15 @@ CHART_STYLE: Dict[str, Any] = {
     "axes.labelweight": "normal",
     "axes.labelcolor": "#212529",
     "axes.titlecolor": "#212529",
-
     # Grid settings
     "grid.color": "#CED4DA",
     "grid.linestyle": "--",
     "grid.linewidth": 0.8,
     "grid.alpha": 0.7,
-
     # Line settings
     "lines.linewidth": 2.5,
     "lines.markersize": 8,
     "lines.markeredgewidth": 1.5,
-
     # Legend settings
     "legend.frameon": True,
     "legend.framealpha": 0.95,
@@ -63,7 +58,6 @@ CHART_STYLE: Dict[str, Any] = {
     "legend.edgecolor": "#DEE2E6",
     "legend.fontsize": 10,
     "legend.title_fontsize": 11,
-
     # Tick settings
     "xtick.labelsize": 10,
     "ytick.labelsize": 10,
@@ -71,7 +65,6 @@ CHART_STYLE: Dict[str, Any] = {
     "ytick.color": "#495057",
     "xtick.direction": "out",
     "ytick.direction": "out",
-
     # Font settings
     "font.family": "sans-serif",
     "font.sans-serif": ["DejaVu Sans", "Arial", "Helvetica", "Liberation Sans"],
@@ -97,35 +90,35 @@ CONSOLE_THEME: Dict[str, str] = {
 
 # Complexity class color mapping for charts
 COMPLEXITY_COLORS: Dict[str, str] = {
-    "O(1)": "#2E86AB",          # Blue - constant
-    "O(log n)": "#6A994E",      # Green - logarithmic
-    "O(n)": "#F18F01",          # Orange - linear
-    "O(n log n)": "#A23B72",    # Magenta - linearithmic
-    "O(n²)": "#C73E1D",         # Red - quadratic
-    "O(n³)": "#BC4B51",         # Burgundy - cubic
-    "O(2^n)": "#8B5A3C",        # Brown - exponential
-    "O(n!)": "#E63946",         # Bright red - factorial
+    "O(1)": "#2E86AB",  # Blue - constant
+    "O(log n)": "#6A994E",  # Green - logarithmic
+    "O(n)": "#F18F01",  # Orange - linear
+    "O(n log n)": "#A23B72",  # Magenta - linearithmic
+    "O(n²)": "#C73E1D",  # Red - quadratic
+    "O(n³)": "#BC4B51",  # Burgundy - cubic
+    "O(2^n)": "#8B5A3C",  # Brown - exponential
+    "O(n!)": "#E63946",  # Bright red - factorial
 }
 
 
 # Marker styles for different metrics in charts
 METRIC_MARKERS: Dict[str, str] = {
-    "execution_time": "o",       # Circle
-    "comparisons": "s",          # Square
-    "swaps": "^",                # Triangle up
-    "accesses": "D",             # Diamond
-    "recursive_calls": "v",      # Triangle down
-    "total_operations": "p",     # Pentagon
-    "memory_operations": "h",    # Hexagon
+    "execution_time": "o",  # Circle
+    "comparisons": "s",  # Square
+    "swaps": "^",  # Triangle up
+    "accesses": "D",  # Diamond
+    "recursive_calls": "v",  # Triangle down
+    "total_operations": "p",  # Pentagon
+    "memory_operations": "h",  # Hexagon
 }
 
 
 # Line styles for curve fitting and theoretical complexity
 LINE_STYLES: Dict[str, str] = {
-    "measured": "-",          # Solid line for measured data
-    "fitted": "--",           # Dashed line for fitted curves
-    "theoretical": "-.",      # Dash-dot for theoretical complexity
-    "confidence": ":",        # Dotted for confidence intervals
+    "measured": "-",  # Solid line for measured data
+    "fitted": "--",  # Dashed line for fitted curves
+    "theoretical": "-.",  # Dash-dot for theoretical complexity
+    "confidence": ":",  # Dotted for confidence intervals
 }
 
 

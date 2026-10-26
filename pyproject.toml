@@ -5,8 +5,8 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "complexity-profiler"
 version = "1.0.0"
-description = "Professional Big-O complexity analysis tool with empirical testing and curve fitting"
-authors = [{name = "Your Name", email = "you@example.com"}]
+description = "Educational algorithm profiling and empirical growth-curve comparison"
+authors = [{name = "ah682"}]
 readme = "README.md"
 requires-python = ">=3.10"
 license = {text = "MIT"}
@@ -47,16 +47,19 @@ dev = [
     "pylint>=2.17.0",
     "bandit>=1.7.5",
     "pre-commit>=3.3.0",
+    "build>=1.0.0",
+    "pandas-stubs",
+    "types-setuptools",
 ]
 
 [project.scripts]
 complexity-profiler = "complexity_profiler.cli.main:cli"
 
 [project.urls]
-Homepage = "https://github.com/yourusername/complexity-profiler"
-Documentation = "https://github.com/yourusername/complexity-profiler#readme"
-Repository = "https://github.com/yourusername/complexity-profiler"
-Issues = "https://github.com/yourusername/complexity-profiler/issues"
+Homepage = "https://github.com/ah682/complexity-profiler"
+Documentation = "https://github.com/ah682/complexity-profiler#readme"
+Repository = "https://github.com/ah682/complexity-profiler"
+Issues = "https://github.com/ah682/complexity-profiler/issues"
 
 [tool.black]
 line-length = 100

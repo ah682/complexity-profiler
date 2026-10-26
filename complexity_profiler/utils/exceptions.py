@@ -9,7 +9,7 @@ All exceptions inherit from BigOComplexityError, making it easy to catch
 any library-specific errors with a single except clause.
 """
 
-from typing import Optional, Any
+from typing import Any, Optional
 
 
 class BigOComplexityError(Exception):

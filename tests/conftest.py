@@ -5,20 +5,21 @@ This module provides common fixtures and test utilities used across all test mod
 including sample data generators, metrics collectors, and profiler instances.
 """
 
-from typing import Callable, Any
 import random
-import pytest
-import numpy as np
+from typing import Any, Callable
 
-from complexity_profiler.analysis.metrics import DefaultMetricsCollector, PerformanceMetrics
+import numpy as np
+import pytest
+
 from complexity_profiler.algorithms.sorting import (
+    BubbleSort,
+    HeapSort,
+    InsertionSort,
     MergeSort,
     QuickSort,
     SelectionSort,
-    BubbleSort,
-    InsertionSort,
-    HeapSort,
 )
+from complexity_profiler.analysis.metrics import DefaultMetricsCollector, PerformanceMetrics
 
 
 @pytest.fixture
@@ -238,9 +239,7 @@ def assert_sorted() -> Callable[[list[Any]], None]:
         """Assert that list is sorted in ascending order."""
         for i in range(len(data) - 1):
             if data[i] > data[i + 1]:
-                raise AssertionError(
-                    f"List not sorted at index {i}: {data[i]} > {data[i + 1]}"
-                )
+                raise AssertionError(f"List not sorted at index {i}: {data[i]} > {data[i + 1]}")
 
     return check
 
@@ -285,12 +284,6 @@ def pytest_configure(config: Any) -> None:
     config.addinivalue_line(
         "markers", "slow: marks tests as slow (deselect with '-m \"not slow\"')"
     )
-    config.addinivalue_line(
-        "markers", "integration: marks tests as integration tests"
-    )
-    config.addinivalue_line(
-        "markers", "unit: marks tests as unit tests"
-    )
-    config.addinivalue_line(
-        "markers", "property: marks tests as property-based tests"
-    )
+    config.addinivalue_line("markers", "integration: marks tests as integration tests")
+    config.addinivalue_line("markers", "unit: marks tests as unit tests")
+    config.addinivalue_line("markers", "property: marks tests as property-based tests")

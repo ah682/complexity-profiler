@@ -144,3 +144,6 @@ Thumbs.db
 bigocomplexity.log
 results/
 output/
+
+# Reproducible documentation example
+!docs/assets/controlled-growth.png

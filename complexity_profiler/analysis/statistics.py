@@ -7,6 +7,7 @@ and consistency checks.
 """
 
 from dataclasses import dataclass
+
 import numpy as np
 import numpy.typing as npt
 
@@ -104,7 +105,7 @@ def compute_statistics(values: list[float]) -> Statistics:
     # Compute coefficient of variation
     # Handle division by zero if mean is zero
     if abs(mean_val) < 1e-10:
-        cv = 0.0 if std_dev_val < 1e-10 else float('inf')
+        cv = 0.0 if std_dev_val < 1e-10 else float("inf")
     else:
         cv = std_dev_val / abs(mean_val)
 
@@ -116,7 +117,7 @@ def compute_statistics(values: list[float]) -> Statistics:
         max=max_val,
         percentile_25=percentile_25_val,
         percentile_75=percentile_75_val,
-        coefficient_of_variation=cv
+        coefficient_of_variation=cv,
     )
 
 

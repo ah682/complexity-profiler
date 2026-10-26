@@ -14,19 +14,19 @@ Graph Structure:
     - Graph: Adjacency list representation supporting directed/undirected graphs
 """
 
-from typing import TypeVar, Generic, Dict, List, Set, Tuple
-from dataclasses import dataclass, field
-from collections import deque
 import heapq
+from collections import deque
+from dataclasses import dataclass, field
+from typing import Dict, Generic, List, Set, Tuple, TypeVar
+
 from complexity_profiler.algorithms.base import (
     AlgorithmMetadata,
+    Comparable,
     ComplexityClass,
     MetricsCollector,
-    Comparable,
 )
 
-
-T = TypeVar('T', bound=Comparable)
+T = TypeVar("T", bound=Comparable)
 
 
 @dataclass
@@ -197,9 +197,7 @@ class BFS(Generic[T]):
 
         return self._bfs_traversal(graph, start_vertex, collector)
 
-    def _bfs_traversal(
-        self, graph: Graph[T], start: T, collector: MetricsCollector
-    ) -> list[T]:
+    def _bfs_traversal(self, graph: Graph[T], start: T, collector: MetricsCollector) -> list[T]:
         """
         Internal BFS implementation.
 
@@ -393,9 +391,7 @@ class DijkstraShortestPath(Generic[T]):
             ),
         )
 
-    def execute(
-        self, data: list[Graph[T]], collector: MetricsCollector
-    ) -> list[Tuple[T, float]]:
+    def execute(self, data: list[Graph[T]], collector: MetricsCollector) -> list[Tuple[T, float]]:
         """
         Find shortest paths from source vertex to all other vertices.
 
@@ -436,7 +432,7 @@ class DijkstraShortestPath(Generic[T]):
             List of (vertex, distance) tuples
         """
         # Initialize distances
-        distances: Dict[T, float] = {vertex: float('inf') for vertex in graph.vertices}
+        distances: Dict[T, float] = {vertex: float("inf") for vertex in graph.vertices}
         distances[source] = 0.0
         collector.record_access()
 
@@ -484,11 +480,7 @@ class DijkstraShortestPath(Generic[T]):
                     collector.record_swap()  # Count heap operation
 
         # Return results as list of (vertex, distance) tuples
-        result = [
-            (vertex, dist)
-            for vertex, dist in distances.items()
-            if dist != float('inf')
-        ]
+        result = [(vertex, dist) for vertex, dist in distances.items() if dist != float("inf")]
         return result
 
 

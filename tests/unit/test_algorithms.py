@@ -6,19 +6,21 @@ verifying correctness, edge case handling, and metrics collection.
 """
 
 from typing import Any
-import pytest
-from hypothesis import given, strategies as st
 
+import pytest
+from hypothesis import given
+from hypothesis import strategies as st
+
+from complexity_profiler.algorithms.base import ComplexityClass
 from complexity_profiler.algorithms.sorting import (
+    BubbleSort,
+    HeapSort,
+    InsertionSort,
     MergeSort,
     QuickSort,
     SelectionSort,
-    BubbleSort,
-    InsertionSort,
-    HeapSort,
 )
 from complexity_profiler.analysis.metrics import DefaultMetricsCollector
-from complexity_profiler.algorithms.base import ComplexityClass
 
 
 class TestMergeSort:
@@ -97,7 +99,9 @@ class TestMergeSort:
         assert metadata.in_place is False
 
     @pytest.mark.parametrize("size", [10, 50, 100, 200])
-    def test_different_sizes(self, algorithm: MergeSort[int], size: int, assert_sorted: Any) -> None:
+    def test_different_sizes(
+        self, algorithm: MergeSort[int], size: int, assert_sorted: Any
+    ) -> None:
         """Test MergeSort with different input sizes."""
         import random
 
@@ -134,8 +138,9 @@ class TestMergeSort:
 
     @given(st.lists(st.integers(min_value=-1000, max_value=1000), max_size=100))
     @pytest.mark.property
-    def test_property_always_sorts(self, algorithm: MergeSort[int], data: list[int]) -> None:
+    def test_property_always_sorts(self, data: list[int]) -> None:
         """Property test: MergeSort always produces sorted output."""
+        algorithm = MergeSort()
         collector = DefaultMetricsCollector()
         result = algorithm.execute(data, collector)
 
@@ -213,7 +218,9 @@ class TestQuickSort:
         assert metadata.stable is False
 
     @pytest.mark.parametrize("size", [10, 50, 100])
-    def test_different_sizes(self, algorithm: QuickSort[int], size: int, assert_sorted: Any) -> None:
+    def test_different_sizes(
+        self, algorithm: QuickSort[int], size: int, assert_sorted: Any
+    ) -> None:
         """Test QuickSort with different input sizes."""
         import random
 
@@ -228,8 +235,9 @@ class TestQuickSort:
 
     @given(st.lists(st.integers(min_value=-1000, max_value=1000), max_size=50))
     @pytest.mark.property
-    def test_property_always_sorts(self, algorithm: QuickSort[int], data: list[int]) -> None:
+    def test_property_always_sorts(self, data: list[int]) -> None:
         """Property test: QuickSort always produces sorted output."""
+        algorithm = QuickSort()
         collector = DefaultMetricsCollector()
         result = algorithm.execute(data, collector)
 
@@ -245,7 +253,10 @@ class TestSelectionSort:
         return SelectionSort()
 
     def test_sorts_correctly(
-        self, algorithm: SelectionSort[int], small_sample_data: dict[str, list[int]], assert_sorted: Any
+        self,
+        algorithm: SelectionSort[int],
+        small_sample_data: dict[str, list[int]],
+        assert_sorted: Any,
     ) -> None:
         """Test that SelectionSort correctly sorts random data."""
         collector = DefaultMetricsCollector()
@@ -331,7 +342,10 @@ class TestBubbleSort:
         return BubbleSort()
 
     def test_sorts_correctly(
-        self, algorithm: BubbleSort[int], small_sample_data: dict[str, list[int]], assert_sorted: Any
+        self,
+        algorithm: BubbleSort[int],
+        small_sample_data: dict[str, list[int]],
+        assert_sorted: Any,
     ) -> None:
         """Test that BubbleSort correctly sorts random data."""
         collector = DefaultMetricsCollector()
@@ -409,7 +423,10 @@ class TestInsertionSort:
         return InsertionSort()
 
     def test_sorts_correctly(
-        self, algorithm: InsertionSort[int], small_sample_data: dict[str, list[int]], assert_sorted: Any
+        self,
+        algorithm: InsertionSort[int],
+        small_sample_data: dict[str, list[int]],
+        assert_sorted: Any,
     ) -> None:
         """Test that InsertionSort correctly sorts random data."""
         collector = DefaultMetricsCollector()
@@ -565,8 +582,9 @@ class TestHeapSort:
 
     @given(st.lists(st.integers(min_value=-1000, max_value=1000), max_size=100))
     @pytest.mark.property
-    def test_property_always_sorts(self, algorithm: HeapSort[int], data: list[int]) -> None:
+    def test_property_always_sorts(self, data: list[int]) -> None:
         """Property test: HeapSort always produces sorted output."""
+        algorithm = HeapSort()
         collector = DefaultMetricsCollector()
         result = algorithm.execute(data, collector)
 

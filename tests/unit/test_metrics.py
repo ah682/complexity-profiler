@@ -6,14 +6,14 @@ and AggregateMetricsCollector classes to ensure accurate tracking of
 algorithm operations and performance measurements.
 """
 
-import pytest
 import time
-from typing import Any
+
+import pytest
 
 from complexity_profiler.analysis.metrics import (
-    PerformanceMetrics,
-    DefaultMetricsCollector,
     AggregateMetricsCollector,
+    DefaultMetricsCollector,
+    PerformanceMetrics,
 )
 
 
@@ -423,9 +423,7 @@ class TestAggregateMetricsCollector:
     def test_get_summary_single_run(self) -> None:
         """Test getting summary with single run."""
         collector = AggregateMetricsCollector()
-        metrics = PerformanceMetrics(
-            comparisons=100, swaps=50, accesses=200, execution_time=1.5
-        )
+        metrics = PerformanceMetrics(comparisons=100, swaps=50, accesses=200, execution_time=1.5)
         collector.add_metrics(metrics)
 
         summary = collector.get_summary()
@@ -455,12 +453,8 @@ class TestAggregateMetricsCollector:
         """Test that summary includes mean total operations."""
         collector = AggregateMetricsCollector()
 
-        collector.add_metrics(
-            PerformanceMetrics(comparisons=10, swaps=5, accesses=20)
-        )  # total=35
-        collector.add_metrics(
-            PerformanceMetrics(comparisons=20, swaps=10, accesses=30)
-        )  # total=60
+        collector.add_metrics(PerformanceMetrics(comparisons=10, swaps=5, accesses=20))  # total=35
+        collector.add_metrics(PerformanceMetrics(comparisons=20, swaps=10, accesses=30))  # total=60
 
         summary = collector.get_summary()
 

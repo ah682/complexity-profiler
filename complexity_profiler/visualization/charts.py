@@ -5,21 +5,22 @@ This module provides comprehensive visualization capabilities for profiling resu
 including complexity curves, comparison plots, and statistical representations.
 """
 
-from typing import List, Optional, Tuple
 from pathlib import Path
+from typing import Any, List, Optional, Tuple, cast
+
+import matplotlib.figure as mpl_figure
+import matplotlib.pyplot as plt
 import numpy as np
 import numpy.typing as npt
-import matplotlib.pyplot as plt
-import matplotlib.figure as mpl_figure
 import seaborn as sns
 
 from complexity_profiler.analysis.profiler import ProfileResult
 from complexity_profiler.visualization.themes import (
     CHART_STYLE,
     COLORS,
-    METRIC_MARKERS,
-    LINE_STYLES,
     EXPORT_FORMATS,
+    LINE_STYLES,
+    METRIC_MARKERS,
     get_color_for_algorithm,
     get_color_for_complexity,
 )
@@ -53,7 +54,7 @@ class ChartGenerator:
 
     def _apply_style(self) -> None:
         """Apply the configured style to matplotlib."""
-        plt.rcParams.update(self.style)
+        plt.rcParams.update(cast(Any, self.style))
         sns.set_palette(COLORS)
 
     def plot_complexity_curve(
@@ -65,7 +66,7 @@ class ChartGenerator:
         log_scale: bool = False,
     ) -> mpl_figure.Figure:
         """
-        Plot complexity curve for a single algorithm with fitted line.
+        Plot measured means and variability with the empirical fit annotation.
 
         Creates a professional chart showing:
         - Measured data points with error bars (optional)
@@ -132,7 +133,7 @@ class ChartGenerator:
                 alpha=0.8,
             )
 
-        # Add fitted curve line
+        # Connect measured means; these are not model predictions.
         ax.plot(
             sizes,
             mean_values,
@@ -140,16 +141,12 @@ class ChartGenerator:
             color=color,
             linewidth=3,
             alpha=0.5,
-            label=f"Fitted {result.empirical_complexity}",
+            label="Mean trend",
         )
 
         # Configure axes
         ax.set_xlabel("Input Size (n)", fontsize=12, fontweight="bold")
-        ax.set_ylabel(
-            self._format_metric_label(metric),
-            fontsize=12,
-            fontweight="bold"
-        )
+        ax.set_ylabel(self._format_metric_label(metric), fontsize=12, fontweight="bold")
         ax.set_title(
             f"{result.algorithm_name} - Complexity Analysis",
             fontsize=14,
@@ -252,11 +249,7 @@ class ChartGenerator:
 
         # Configure axes
         ax.set_xlabel("Input Size (n)", fontsize=12, fontweight="bold")
-        ax.set_ylabel(
-            self._format_metric_label(metric),
-            fontsize=12,
-            fontweight="bold"
-        )
+        ax.set_ylabel(self._format_metric_label(metric), fontsize=12, fontweight="bold")
         ax.set_title(
             f"Algorithm Comparison - {self._format_metric_label(metric)}",
             fontsize=14,
@@ -408,9 +401,7 @@ class ChartGenerator:
             self.current_figure = None
 
     def _extract_metric_data(
-        self,
-        result: ProfileResult,
-        metric: str
+        self, result: ProfileResult, metric: str
     ) -> Tuple[npt.NDArray[np.float64], Optional[npt.NDArray[np.float64]]]:
         """
         Extract mean and standard deviation for a metric from ProfileResult.
@@ -434,9 +425,7 @@ class ChartGenerator:
         }
 
         if metric not in valid_metrics:
-            raise ValueError(
-                f"Invalid metric '{metric}'. Must be one of {valid_metrics}"
-            )
+            raise ValueError(f"Invalid metric '{metric}'. Must be one of {valid_metrics}")
 
         mean_values = []
         std_values = []

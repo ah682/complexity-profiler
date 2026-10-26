@@ -1,11 +1,10 @@
 """Core protocols and base classes for algorithm implementations."""
 
-from typing import Protocol, TypeVar, Any, runtime_checkable
 from dataclasses import dataclass
 from enum import Enum
+from typing import Any, Protocol, TypeVar, runtime_checkable
 
-
-T = TypeVar('T')
+T = TypeVar("T")
 
 
 class ComplexityClass(Enum):
@@ -14,8 +13,8 @@ class ComplexityClass(Enum):
     LINEAR = "O(n)"
     LINEARITHMIC = "O(n log n)"
     QUADRATIC = "O(n^2)"
-    CUBIC = "O(n^2)"
-    EXPONENTIAL = "O(2)"
+    CUBIC = "O(n^3)"
+    EXPONENTIAL = "O(2^n)"
     FACTORIAL = "O(n!)"
 
     def __str__(self) -> str:
@@ -25,6 +24,7 @@ class ComplexityClass(Enum):
 @dataclass(frozen=True)
 class AlgorithmMetadata:
     """Algorithm metadata and properties."""
+
     name: str
     category: str
     expected_complexity: ComplexityClass
@@ -45,6 +45,7 @@ class Comparable(Protocol):
 
 class MetricsCollector(Protocol):
     """Metrics collection during algorithm execution."""
+
     def record_comparison(self) -> None: ...
     def record_swap(self) -> None: ...
     def record_access(self) -> None: ...
@@ -59,7 +60,7 @@ class Algorithm(Protocol[T]):
     @property
     def metadata(self) -> AlgorithmMetadata: ...
 
-    def execute(self, data: list[T], collector: 'MetricsCollector') -> list[T]: ...
+    def execute(self, data: list[T], collector: "MetricsCollector") -> list[Any]: ...
 
 
 __all__ = [

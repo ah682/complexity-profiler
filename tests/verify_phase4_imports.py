@@ -8,11 +8,12 @@ print("-" * 60)
 try:
     # Test searching algorithms imports
     from complexity_profiler.algorithms.searching import (
-        LinearSearch,
         BinarySearch,
-        JumpSearch,
         InterpolationSearch,
+        JumpSearch,
+        LinearSearch,
     )
+
     print("✓ Searching algorithms imported successfully")
     print(f"  - LinearSearch: {LinearSearch}")
     print(f"  - BinarySearch: {BinarySearch}")
@@ -26,11 +27,12 @@ print()
 try:
     # Test graph algorithms imports
     from complexity_profiler.algorithms.graph import (
-        Graph,
         BFS,
         DFS,
         DijkstraShortestPath,
+        Graph,
     )
+
     print("✓ Graph algorithms imported successfully")
     print(f"  - Graph: {Graph}")
     print(f"  - BFS: {BFS}")
@@ -44,12 +46,13 @@ print()
 try:
     # Test graph generators imports
     from complexity_profiler.data.graph_generators import (
-        random_graph,
         complete_graph,
-        tree_graph,
-        linear_graph,
         cyclic_graph,
+        linear_graph,
+        random_graph,
+        tree_graph,
     )
+
     print("✓ Graph generators imported successfully")
     print(f"  - random_graph: {random_graph}")
     print(f"  - complete_graph: {complete_graph}")
@@ -63,19 +66,18 @@ print()
 
 try:
     # Test package-level imports
-    from complexity_profiler.algorithms import (
-        LinearSearch as LS,
-        BinarySearch as BS,
-        BFS as BFSAlgo,
-        Graph as G,
-    )
-    from complexity_profiler.data import (
-        random_graph as rg,
-        complete_graph as cg,
-    )
+    from complexity_profiler.algorithms import BFS as BFSAlgo
+    from complexity_profiler.algorithms import BinarySearch as BS
+    from complexity_profiler.algorithms import Graph as G
+    from complexity_profiler.algorithms import LinearSearch as LS
+    from complexity_profiler.data import complete_graph as cg
+    from complexity_profiler.data import random_graph as rg
+
+    for exported in (LS, BS, BFSAlgo, G, rg, cg):
+        assert callable(exported)
     print("✓ Package-level imports work correctly")
-    print(f"  - complexity_profiler.algorithms exports search/graph algorithms")
-    print(f"  - complexity_profiler.data exports graph generators")
+    print("  - complexity_profiler.algorithms exports search/graph algorithms")
+    print("  - complexity_profiler.data exports graph generators")
 except ImportError as e:
     print(f"✗ Failed package-level imports: {e}")
 

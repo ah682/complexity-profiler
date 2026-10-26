@@ -162,7 +162,7 @@ Sorting algorithms:
 Key features:
 - Warmup runs for accurate timing
 - Statistical analysis (mean, median, std dev, percentiles, CV)
-- R² curve fitting to determine actual complexity
+- R² curve fitting to compare candidate empirical growth curves
 - Multiple data patterns (random, sorted, reverse, nearly sorted)
 
 ### Phase 3: CLI & Visualization

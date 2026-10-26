@@ -5,32 +5,40 @@ Provides commands for analyzing algorithms, comparing performance,
 and visualizing complexity curves.
 """
 
+from pathlib import Path
+from typing import Any, Optional
+
 import click
 from rich.console import Console
 from rich.table import Table
-from typing import Optional
-from pathlib import Path
 
-from complexity_profiler.algorithms.sorting import (
-    MergeSort, QuickSort, SelectionSort, BubbleSort,
-    InsertionSort, HeapSort
-)
+from complexity_profiler.algorithms.base import Algorithm
 from complexity_profiler.algorithms.searching import (
-    LinearSearch, BinarySearch, JumpSearch, InterpolationSearch
+    BinarySearch,
+    InterpolationSearch,
+    JumpSearch,
+    LinearSearch,
+)
+from complexity_profiler.algorithms.sorting import (
+    BubbleSort,
+    HeapSort,
+    InsertionSort,
+    MergeSort,
+    QuickSort,
+    SelectionSort,
 )
 from complexity_profiler.analysis.profiler import AlgorithmProfiler
 from complexity_profiler.data.generators import get_data_generator
+from complexity_profiler.export.csv_exporter import export_to_csv
+from complexity_profiler.export.json_exporter import export_to_json
+from complexity_profiler.utils.logging_config import setup_logging
 from complexity_profiler.visualization.charts import ChartGenerator
 from complexity_profiler.visualization.formatters import format_profile_result
-from complexity_profiler.export.json_exporter import export_to_json
-from complexity_profiler.export.csv_exporter import export_to_csv
-from complexity_profiler.utils.exceptions import BigOComplexityError
-from complexity_profiler.utils.logging_config import setup_logging
 
 console = Console()
 
 # Algorithm registry
-ALGORITHMS = {
+ALGORITHMS: dict[str, Algorithm[Any]] = {
     # Sorting algorithms
     "merge_sort": MergeSort(),
     "quick_sort": QuickSort(),
@@ -55,7 +63,7 @@ def cli(ctx: click.Context, verbose: bool, log_file: Optional[str]) -> None:
     """
     Big-O Complexity Analyzer - Analyze algorithm performance empirically.
 
-    Measure actual complexity, generate visualizations, and export results.
+    Estimate empirical growth, generate visualizations, and export results.
     """
     ctx.ensure_object(dict)
     ctx.obj["verbose"] = verbose
@@ -68,41 +76,28 @@ def cli(ctx: click.Context, verbose: bool, log_file: Optional[str]) -> None:
 @cli.command()
 @click.argument("algorithm", type=click.Choice(list(ALGORITHMS.keys())))
 @click.option(
-    "--sizes", "-s",
+    "--sizes",
+    "-s",
     default="100,500,1000,5000",
-    help="Comma-separated input sizes (default: 100,500,1000,5000)"
+    help="Comma-separated input sizes (default: 100,500,1000,5000)",
 )
+@click.option("--runs", "-r", default=10, type=int, help="Number of runs per size (default: 10)")
 @click.option(
-    "--runs", "-r",
-    default=10,
-    type=int,
-    help="Number of runs per size (default: 10)"
-)
-@click.option(
-    "--data-type", "-d",
+    "--data-type",
+    "-d",
     type=click.Choice(["random", "sorted", "reverse", "nearly_sorted"]),
     default="random",
-    help="Type of input data (default: random)"
+    help="Type of input data (default: random)",
 )
 @click.option(
-    "--export", "-e",
-    type=click.Choice(["json", "csv"]),
-    help="Export format (json or csv)"
+    "--export", "-e", type=click.Choice(["json", "csv"]), help="Export format (json or csv)"
+)
+@click.option("--output", "-o", type=click.Path(), help="Output file path for export")
+@click.option(
+    "--visualize/--no-visualize", default=True, help="Generate visualization chart (default: yes)"
 )
 @click.option(
-    "--output", "-o",
-    type=click.Path(),
-    help="Output file path for export"
-)
-@click.option(
-    "--visualize/--no-visualize",
-    default=True,
-    help="Generate visualization chart (default: yes)"
-)
-@click.option(
-    "--save-chart", "-c",
-    type=click.Path(),
-    help="Save chart to file instead of displaying"
+    "--save-chart", "-c", type=click.Path(), help="Save chart to file instead of displaying"
 )
 @click.pass_context
 def analyze(
@@ -114,7 +109,7 @@ def analyze(
     export: Optional[str],
     output: Optional[str],
     visualize: bool,
-    save_chart: Optional[str]
+    save_chart: Optional[str],
 ) -> None:
     """
     Analyze a single algorithm's complexity.
@@ -155,10 +150,12 @@ def analyze(
 
         # Create and configure profiler
         with console.status(f"[bold green]Profiling {algorithm}...", spinner="dots"):
-            profiler = AlgorithmProfiler() \
-                .with_sizes(size_list) \
-                .with_runs(runs) \
+            profiler = (
+                AlgorithmProfiler()
+                .with_sizes(size_list)
+                .with_runs(runs)
                 .with_data_generator(data_gen)
+            )
 
             result = profiler.profile(algo)
 
@@ -180,7 +177,7 @@ def analyze(
         if visualize:
             chart_gen = ChartGenerator()
             if save_chart:
-                chart_gen.plot_complexity_curve(result, save_path=save_chart)
+                chart_gen.plot_complexity_curve(result, save_path=Path(save_chart))
                 console.print(f"\n[green] Chart saved to {save_chart}[/green]")
             else:
                 chart_gen.plot_complexity_curve(result)
@@ -196,7 +193,12 @@ def analyze(
 @click.argument("algorithms", nargs=-1, required=True)
 @click.option("--sizes", "-s", default="100,500,1000,5000")
 @click.option("--runs", "-r", default=10, type=int)
-@click.option("--data-type", "-d", type=click.Choice(["random", "sorted", "reverse", "nearly_sorted"]), default="random")
+@click.option(
+    "--data-type",
+    "-d",
+    type=click.Choice(["random", "sorted", "reverse", "nearly_sorted"]),
+    default="random",
+)
 @click.option("--save-chart", "-c", type=click.Path(), help="Save comparison chart to file")
 @click.pass_context
 def compare(
@@ -205,7 +207,7 @@ def compare(
     sizes: str,
     runs: int,
     data_type: str,
-    save_chart: Optional[str]
+    save_chart: Optional[str],
 ) -> None:
     """
     Compare multiple algorithms.
@@ -238,10 +240,12 @@ def compare(
             algo = ALGORITHMS[algo_name]
 
             with console.status(f"[bold green]Profiling {algo_name}...", spinner="dots"):
-                profiler = AlgorithmProfiler() \
-                    .with_sizes(size_list) \
-                    .with_runs(runs) \
+                profiler = (
+                    AlgorithmProfiler()
+                    .with_sizes(size_list)
+                    .with_runs(runs)
                     .with_data_generator(data_gen)
+                )
 
                 result = profiler.profile(algo)
                 results.append(result)
@@ -258,9 +262,9 @@ def compare(
             stable = "Yes" if algo_inst.metadata.stable else "No"
             table.add_row(
                 result.algorithm_name,
-                str(result.fitted_complexity),
-                f"{result.fit_quality:.4f}",
-                stable
+                str(result.empirical_complexity),
+                f"{result.r_squared:.4f}",
+                stable,
             )
 
         console.print("\n")
@@ -269,7 +273,7 @@ def compare(
         # Visualize comparison
         chart_gen = ChartGenerator()
         if save_chart:
-            chart_gen.plot_comparison(results, save_path=save_chart)
+            chart_gen.plot_comparison(results, save_path=Path(save_chart))
             console.print(f"\n[green] Comparison chart saved to {save_chart}[/green]")
         else:
             chart_gen.plot_comparison(results)
@@ -303,7 +307,7 @@ def list_algorithms(list_sorting: bool, list_searching: bool) -> None:
                 table.add_row(
                     name,
                     str(algo.metadata.expected_complexity),
-                    "Yes" if algo.metadata.stable else "No"
+                    "Yes" if algo.metadata.stable else "No",
                 )
         console.print(table)
 

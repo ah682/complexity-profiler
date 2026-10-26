@@ -1,3 +1,7 @@
+# B311 annotations below are for synthetic inputs or algorithm pivots,
+# where reproducible pseudorandomness is intentional; no security use.
+from complexity_profiler.algorithms.base import Algorithm
+
 """
 Input validation utilities for CLI commands.
 
@@ -5,8 +9,9 @@ This module provides validators for command-line arguments and options,
 ensuring that user input is valid before processing.
 """
 
-from typing import List, Optional, Tuple
 from pathlib import Path
+from typing import Any, Callable, List, Optional, Tuple, cast
+
 import click
 
 # Available algorithms registry
@@ -32,9 +37,9 @@ VALID_METRICS = {
 
 # Valid data types for test data generation
 VALID_DATA_TYPES = {
-    "random",      # Random unsorted data
-    "sorted",      # Already sorted data (best case)
-    "reversed",    # Reverse sorted data (worst case)
+    "random",  # Random unsorted data
+    "sorted",  # Already sorted data (best case)
+    "reversed",  # Reverse sorted data (worst case)
     "nearly_sorted",  # Mostly sorted with some disorder
 }
 
@@ -67,16 +72,12 @@ def validate_algorithm_name(ctx: click.Context, param: click.Parameter, value: s
     """
     if value not in AVAILABLE_ALGORITHMS:
         available = ", ".join(sorted(AVAILABLE_ALGORITHMS.keys()))
-        raise click.BadParameter(
-            f"Unknown algorithm '{value}'. Available algorithms: {available}"
-        )
+        raise click.BadParameter(f"Unknown algorithm '{value}'. Available algorithms: {available}")
     return value
 
 
 def validate_algorithm_names(
-    ctx: click.Context,
-    param: click.Parameter,
-    value: Tuple[str, ...]
+    ctx: click.Context, param: click.Parameter, value: Tuple[str, ...]
 ) -> Tuple[str, ...]:
     """
     Validate multiple algorithm names.
@@ -144,6 +145,7 @@ def validate_input_sizes(ctx: click.Context, param: click.Parameter, value: str)
 
             # Generate evenly spaced sizes
             import numpy as np
+
             sizes = np.linspace(start_val, end_val, steps, dtype=int).tolist()
             return sorted(list(set(sizes)))  # Remove duplicates and sort
 
@@ -161,7 +163,7 @@ def validate_input_sizes(ctx: click.Context, param: click.Parameter, value: str)
                 raise click.BadParameter("Input size must be a positive integer")
             return [size]
 
-    except ValueError as e:
+    except ValueError:
         raise click.BadParameter(
             f"Invalid input sizes format: {value}. "
             "Use comma-separated values (e.g., '100,500,1000') "
@@ -211,9 +213,7 @@ def validate_data_type(ctx: click.Context, param: click.Parameter, value: str) -
     """
     if value not in VALID_DATA_TYPES:
         valid_types = ", ".join(sorted(VALID_DATA_TYPES))
-        raise click.BadParameter(
-            f"Invalid data type '{value}'. Valid types: {valid_types}"
-        )
+        raise click.BadParameter(f"Invalid data type '{value}'. Valid types: {valid_types}")
     return value
 
 
@@ -234,13 +234,13 @@ def validate_export_format(ctx: click.Context, param: click.Parameter, value: st
     """
     if value not in VALID_EXPORT_FORMATS:
         valid_formats = ", ".join(sorted(VALID_EXPORT_FORMATS))
-        raise click.BadParameter(
-            f"Invalid export format '{value}'. Valid formats: {valid_formats}"
-        )
+        raise click.BadParameter(f"Invalid export format '{value}'. Valid formats: {valid_formats}")
     return value
 
 
-def validate_output_path(ctx: click.Context, param: click.Parameter, value: Optional[str]) -> Optional[Path]:
+def validate_output_path(
+    ctx: click.Context, param: click.Parameter, value: Optional[str]
+) -> Optional[Path]:
     """
     Validate output path parameter.
 
@@ -262,9 +262,7 @@ def validate_output_path(ctx: click.Context, param: click.Parameter, value: Opti
 
     # Check if parent directory exists
     if not path.parent.exists():
-        raise click.BadParameter(
-            f"Parent directory does not exist: {path.parent}"
-        )
+        raise click.BadParameter(f"Parent directory does not exist: {path.parent}")
 
     # Warn if file already exists
     if path.exists():
@@ -291,13 +289,11 @@ def validate_metric(ctx: click.Context, param: click.Parameter, value: str) -> s
     """
     if value not in VALID_METRICS:
         valid_metrics = ", ".join(sorted(VALID_METRICS))
-        raise click.BadParameter(
-            f"Invalid metric '{value}'. Valid metrics: {valid_metrics}"
-        )
+        raise click.BadParameter(f"Invalid metric '{value}'. Valid metrics: {valid_metrics}")
     return value
 
 
-def get_algorithm_instance(algorithm_name: str):
+def get_algorithm_instance(algorithm_name: str) -> Algorithm[Any]:
     """
     Get an instance of the specified algorithm.
 
@@ -323,16 +319,15 @@ def get_algorithm_instance(algorithm_name: str):
     try:
         # Dynamic import
         import importlib
+
         module = importlib.import_module(module_path)
         algorithm_class = getattr(module, class_name)
-        return algorithm_class()
+        return cast(Algorithm[Any], algorithm_class())
     except (ImportError, AttributeError) as e:
-        raise ValueError(
-            f"Failed to load algorithm '{algorithm_name}': {e}"
-        )
+        raise ValueError(f"Failed to load algorithm '{algorithm_name}': {e}")
 
 
-def create_data_generator(data_type: str, seed: Optional[int] = None):
+def create_data_generator(data_type: str, seed: Optional[int] = None) -> Callable[[int], list[Any]]:
     """
     Create a data generator function based on data type.
 
@@ -350,6 +345,7 @@ def create_data_generator(data_type: str, seed: Optional[int] = None):
         100
     """
     import random
+
     import numpy as np
 
     if seed is not None:
@@ -357,7 +353,7 @@ def create_data_generator(data_type: str, seed: Optional[int] = None):
         np.random.seed(seed)
 
     if data_type == "random":
-        return lambda n: list(np.random.randint(0, 10000, size=n))
+        return lambda n: np.random.randint(0, 10000, size=n).tolist()
 
     elif data_type == "sorted":
         return lambda n: list(range(n))
@@ -366,14 +362,16 @@ def create_data_generator(data_type: str, seed: Optional[int] = None):
         return lambda n: list(range(n, 0, -1))
 
     elif data_type == "nearly_sorted":
-        def nearly_sorted(n):
+
+        def nearly_sorted(n: int) -> list[int]:
             data = list(range(n))
             # Swap ~5% of elements
             num_swaps = max(1, n // 20)
             for _ in range(num_swaps):
-                i, j = random.sample(range(n), 2)
+                i, j = random.sample(range(n), 2)  # nosec B311
                 data[i], data[j] = data[j], data[i]
             return data
+
         return nearly_sorted
 
     else:

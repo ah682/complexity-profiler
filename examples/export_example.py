@@ -8,10 +8,10 @@ profiling results to different formats.
 from datetime import datetime
 from pathlib import Path
 
-from complexity_profiler.analysis.profiler import ProfileResult
 from complexity_profiler.analysis.metrics import PerformanceMetrics
+from complexity_profiler.analysis.profiler import ProfileResult
 from complexity_profiler.analysis.statistics import Statistics, compute_statistics
-from complexity_profiler.export import export_to_json, export_to_csv, export_metrics_summary_csv
+from complexity_profiler.export import export_metrics_summary_csv, export_to_csv, export_to_json
 
 
 def create_sample_profile_result() -> ProfileResult:

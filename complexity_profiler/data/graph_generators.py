@@ -1,3 +1,5 @@
+# B311 annotations below are for synthetic inputs or algorithm pivots,
+# where reproducible pseudorandomness is intentional; no security use.
 """
 Graph data generators for Big-O Complexity Analyzer.
 
@@ -11,13 +13,13 @@ Available Generators:
     - tree_graph: Creates a tree structure (connected acyclic graph)
 """
 
-from typing import TypeVar, List
 import random
+from typing import List, TypeVar
+
 from complexity_profiler.algorithms.base import Comparable
 from complexity_profiler.algorithms.graph import Graph
 
-
-T = TypeVar('T', bound=Comparable)
+T = TypeVar("T", bound=Comparable)
 
 
 def random_graph(
@@ -54,7 +56,8 @@ def random_graph(
         >>> g = random_graph(5, edge_probability=0.5, seed=42)
         >>> print(g.get_vertex_count())
         5
-        >>> g = random_graph(10, edge_probability=0.3, weighted=True, min_weight=1.0, max_weight=5.0)
+        >>> g = random_graph(10, edge_probability=0.3, weighted=True,
+        ...                  min_weight=1.0, max_weight=5.0)
     """
     if vertices <= 0:
         raise ValueError("Number of vertices must be positive")
@@ -81,10 +84,10 @@ def random_graph(
                 continue
 
             # Decide if edge exists based on probability
-            if random.random() < edge_probability:
+            if random.random() < edge_probability:  # nosec B311
                 weight = 1.0
                 if weighted:
-                    weight = random.uniform(min_weight, max_weight)
+                    weight = random.uniform(min_weight, max_weight)  # nosec B311
 
                 graph.add_edge(i, j, weight=weight)
 
@@ -150,7 +153,7 @@ def complete_graph(
 
             weight = 1.0
             if weighted:
-                weight = random.uniform(min_weight, max_weight)
+                weight = random.uniform(min_weight, max_weight)  # nosec B311
 
             graph.add_edge(i, j, weight=weight)
 
@@ -216,11 +219,11 @@ def tree_graph(
 
     for i in range(1, vertices):
         # Choose a random vertex from already connected vertices to be the parent
-        parent = random.choice(connected_vertices)
+        parent = random.choice(connected_vertices)  # nosec B311
 
         weight = 1.0
         if weighted:
-            weight = random.uniform(min_weight, max_weight)
+            weight = random.uniform(min_weight, max_weight)  # nosec B311
 
         graph.add_edge(parent, i, weight=weight)
         connected_vertices.append(i)
@@ -231,14 +234,14 @@ def tree_graph(
             children_count: dict[int, int] = {}
             for vertex in connected_vertices:
                 children_count[vertex] = sum(
-                    1 for _, _ in graph.get_neighbors(vertex)
+                    1
+                    for _, _ in graph.get_neighbors(vertex)
                     if _ > vertex  # Count only children (higher indices)
                 )
 
             # Remove vertices that have reached their branching limit
             connected_vertices = [
-                v for v in connected_vertices
-                if children_count.get(v, 0) < branching_factor
+                v for v in connected_vertices if children_count.get(v, 0) < branching_factor
             ]
 
             # Ensure at least one vertex is available for connection
@@ -297,7 +300,7 @@ def linear_graph(
     for i in range(vertices - 1):
         weight = 1.0
         if weighted:
-            weight = random.uniform(min_weight, max_weight)
+            weight = random.uniform(min_weight, max_weight)  # nosec B311
 
         graph.add_edge(i, i + 1, weight=weight)
 
@@ -353,7 +356,7 @@ def cyclic_graph(
     for i in range(vertices):
         weight = 1.0
         if weighted:
-            weight = random.uniform(min_weight, max_weight)
+            weight = random.uniform(min_weight, max_weight)  # nosec B311
 
         # Connect i to (i+1) % vertices to form a cycle
         next_vertex = (i + 1) % vertices

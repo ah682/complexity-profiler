@@ -1,10 +1,14 @@
+> Start with the [current project README](../README.md) for installation,
+> fitting assumptions and inconclusive-result behavior. This page retains the
+> extended walkthrough; CLI options are authoritative in `complexity-profiler --help`.
+
 # Big-O Complexity Analyzer
 
 [![Python Version](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Code Style](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
-A tool for analyzing algorithm complexity empirically. Runs algorithms on different input sizes, fits curves to the runtime data, and tells you the actual Big-O class.
+A tool for analyzing algorithm complexity empirically. Runs algorithms on different input sizes, fits curves to the runtime data, and tells you the candidate empirical growth curve.
 
 ## What it does
 
@@ -37,7 +41,7 @@ Features:
 Requires Python 3.10+.
 
 ```bash
-git clone https://github.com/yourusername/complexity-profiler.git
+git clone https://github.com/ah682/complexity-profiler.git
 cd complexity-profiler
 pip install -r requirements.txt
 pip install -e .
