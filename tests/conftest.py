@@ -276,11 +276,17 @@ def performance_metrics_factory() -> Callable[..., PerformanceMetrics]:
 # Pytest configuration
 def pytest_configure(config: Any) -> None:
     """
-    Configure pytest with custom markers.
+    Configure headless chart rendering and custom markers.
 
     Args:
         config: Pytest configuration object
     """
+    # Tests inspect figure coordinates and exported PNGs, not GUI integration.
+    # Configure before test-module imports can select pyplot's host GUI backend.
+    import matplotlib
+
+    matplotlib.use("Agg", force=True)
+
     config.addinivalue_line(
         "markers", "slow: marks tests as slow (deselect with '-m \"not slow\"')"
     )
